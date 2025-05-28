@@ -1,0 +1,40 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "BaseDungeonInstance.h"
+#include "SimpleGridDungeonInstance.generated.h"
+
+class USimpleGridDungeonGenerator;
+class USimpleGridDungeonLayout;
+
+UCLASS()
+class DUNGEONFORGE_API ASimpleGridDungeonInstance : public ABaseDungeonInstance
+{
+	GENERATED_BODY()
+
+public:
+	// Sets default values for this actor's properties
+	ASimpleGridDungeonInstance();
+
+	virtual void GenerateLayout() override;
+	virtual void SpawnDungeon() override;
+	virtual void GenerateDungeon() override;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	UPROPERTY()
+	USimpleGridDungeonGenerator* Generator;
+	UPROPERTY()
+	USimpleGridDungeonLayout* Layout;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings", meta=(ClampMin=1, ClampMax=100))
+	int32 RoomCount = 5;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings|Corridors")
+	bool bAllowCorridors = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings|Corridors", meta=(EditCondition="bAllowCorridors", ClampMin=1, ClampMax=20))
+	int32 CorridorLength = 1;
+};
