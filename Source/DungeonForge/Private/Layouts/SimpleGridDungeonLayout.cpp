@@ -7,19 +7,19 @@ USimpleGridDungeonLayout::USimpleGridDungeonLayout()
 {
 }
 
-TArray<FGridTile> USimpleGridDungeonLayout::GetRoomTiles() const
+TArray<FGridCoordinate> USimpleGridDungeonLayout::GetRoomTiles() const
 {
 	return RoomTiles.Array();
 }
 
-TArray<FGridTile> USimpleGridDungeonLayout::GetCorridorTiles() const
+TArray<FGridCoordinate> USimpleGridDungeonLayout::GetCorridorTiles() const
 {
 	return CorridorTiles.Array();
 }
 
-TArray<FGridTile> USimpleGridDungeonLayout::GetAllFloorTiles() const
+TArray<FGridCoordinate> USimpleGridDungeonLayout::GetAllFloorTiles() const
 {
-	TArray<FGridTile> AllTiles = RoomTiles.Array();
+	TArray<FGridCoordinate> AllTiles = RoomTiles.Array();
 	AllTiles.Append(CorridorTiles.Array());
 	return AllTiles;
 }
@@ -33,9 +33,9 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetDoorPositions(const float GridSiz
 TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSize) const
 {
 	TSet<FGridEdge> WallPositions;
-	
-	// ReSharper disable once CppTooWideScopeInitStatement
-	TSet<FGridCoordinate> AllCoordinates = UGridCoordinateHelperLibrary::GetAllCoordinates(GetAllFloorTiles());
+
+	// Find all the coordinates that are adjacent to a floor tile and add a wall between them if the adjacent tile is not a floor tile.
+	TSet<FGridCoordinate> AllCoordinates = TSet<FGridCoordinate>(GetAllFloorTiles());
 	for (const FGridCoordinate& Coord : AllCoordinates)
 	{
 		for (const FGridCoordinate& NeighbourCoord : UGridCoordinateHelperLibrary::GetAdjacentCoordinates(Coord))
@@ -50,12 +50,12 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSiz
 	return WallPositions.Array();
 }
 
-void USimpleGridDungeonLayout::AddRoomTiles(const TArray<FGridTile>& InRoomTiles)
+void USimpleGridDungeonLayout::AddRoomTiles(const TArray<FGridCoordinate>& InRoomTiles)
 {
 	this->RoomTiles.Append(InRoomTiles);
 }
 
-void USimpleGridDungeonLayout::AddCorridorTiles(const TArray<FGridTile>& InCorridorTiles)
+void USimpleGridDungeonLayout::AddCorridorTiles(const TArray<FGridCoordinate>& InCorridorTiles)
 {
 	this->CorridorTiles.Append(InCorridorTiles);
 }

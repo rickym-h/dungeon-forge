@@ -113,43 +113,6 @@ FORCEINLINE uint32 GetTypeHash(const FGridEdge& Edge)
 }
 
 /**
- * A data structure representing a tile in a grid layout.
- */
-USTRUCT(BlueprintType)
-struct FGridTile
-{
-	GENERATED_BODY()
-
-	FGridTile();
-	FGridTile(FGridCoordinate InCoordinate, int32 InSize);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Coordinate")
-	FGridCoordinate Coordinate;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid Coordinate")
-	int32 Size;
-
-	bool operator==(const FGridTile& Other) const
-	{
-		return Coordinate == Other.Coordinate && Size == Other.Size;
-	}
-
-	bool operator!=(const FGridTile& Other) const
-	{
-		return !(*this == Other);
-	}
-};
-
-/**
- * @param GridTile 
- * @return Generates hash for the grid coordinate. Required for TSet and TMap usage.
- */
-FORCEINLINE uint32 GetTypeHash(const FGridTile& GridTile)
-{
-	return FCrc::MemCrc32(&GridTile, sizeof(GridTile));
-}
-
-/**
  * A library of utility functions for working with grid coordinates in dungeon systems.
  */
 UCLASS()
@@ -163,11 +126,4 @@ public:
 	
 	UFUNCTION(BlueprintPure)
 	static FVector GetWorldPositionFromGridCoordinate(const FGridCoordinate& Coordinate, const float TileSize = 100.0f);
-	UFUNCTION(BlueprintPure)
-	static FVector GetWorldPositionFromGridTile(const FGridTile& Tile);
-
-	UFUNCTION(BlueprintPure)
-	static TSet<FGridCoordinate> GetAllCoordinates(const TArray<FGridTile>& Tiles);
-	static TSet<FGridCoordinate> GetAllCoordinates(const TSet<FGridTile>& Tiles);
-	
 };

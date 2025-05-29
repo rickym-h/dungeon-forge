@@ -13,10 +13,10 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 {
 	USimpleGridDungeonLayout* Layout = NewObject<USimpleGridDungeonLayout>();
 
-	const TArray<FGridTile> Room = {FGridTile(FGridCoordinate(), 500)};
+	const TArray<FGridCoordinate> Room = {FGridCoordinate()};
 	Layout->AddRoomTiles(Room);
 
-	const TArray<FGridTile> Corridor = {FGridTile(FGridCoordinate(0, 1), 500)};
+	const TArray<FGridCoordinate> Corridor = {FGridCoordinate(0,1)};
 	Layout->AddCorridorTiles(Corridor);
 	
 	return Layout;

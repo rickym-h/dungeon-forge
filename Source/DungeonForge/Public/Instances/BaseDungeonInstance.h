@@ -42,7 +42,7 @@ public:
 	 */
 	virtual void ClearDungeon();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Parameters")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings")
 	float GridSize = 500.f;
 
 protected:
