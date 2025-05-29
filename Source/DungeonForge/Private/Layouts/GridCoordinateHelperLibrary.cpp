@@ -55,18 +55,6 @@ FGridEdge FGridEdge::Sorted() const
 	}
 }
 
-FGridTile::FGridTile()
-{
-	Coordinate = FGridCoordinate();
-	Size = 100;
-}
-
-FGridTile::FGridTile(const FGridCoordinate InCoordinate, const int32 InSize)
-{
-	Coordinate = InCoordinate;
-	Size = InSize;
-}
-
 TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal)
 {
 	TArray<FGridCoordinate> AdjacentCoordinates;
@@ -92,24 +80,4 @@ TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(con
 FVector UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(const FGridCoordinate& Coordinate, const float TileSize)
 {
 	return FVector(Coordinate.X * TileSize, Coordinate.Y * TileSize, 0.0f);
-}
-
-FVector UGridCoordinateHelperLibrary::GetWorldPositionFromGridTile(const FGridTile& Tile)
-{
-	return GetWorldPositionFromGridCoordinate(Tile.Coordinate, Tile.Size);
-}
-
-TSet<FGridCoordinate> UGridCoordinateHelperLibrary::GetAllCoordinates(const TArray<FGridTile>& Tiles)
-{
-	TSet<FGridCoordinate> AllCoordinates;
-	for (const FGridTile& Tile : Tiles)
-	{
-		AllCoordinates.Add(Tile.Coordinate);
-	}
-	return AllCoordinates;
-}
-
-TSet<FGridCoordinate> UGridCoordinateHelperLibrary::GetAllCoordinates(const TSet<FGridTile>& Tiles)
-{
-	return GetAllCoordinates(Tiles.Array());
 }

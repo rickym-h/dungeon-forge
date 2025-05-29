@@ -81,7 +81,7 @@ void ASimpleGridDungeonInstance::BeginPlay()
 
 void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
 {
-	for (const FGridTile& Tile : Layout->GetRoomTiles())
+	for (const FGridCoordinate& Coordinate : Layout->GetRoomTiles())
 	{
 		// Spawn floor tile
 		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
@@ -91,7 +91,7 @@ void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
 			
 			const FTransform TileTransform = FTransform(
 				FRotator::ZeroRotator,
-				GetPositionForCoordinate(Tile.Coordinate),
+				GetPositionForCoordinate(Coordinate),
 				FVector(1.0f, 1.0f, 1.0f));
 			MeshComponent->SetWorldTransform(TileTransform);
 			MeshComponent->RegisterComponent();
@@ -104,7 +104,7 @@ void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
 
 void ASimpleGridDungeonInstance::SpawnCorridorFloorTiles()
 {
-	for (const FGridTile& Tile : Layout->GetCorridorTiles())
+	for (const FGridCoordinate& Coordinate : Layout->GetCorridorTiles())
 	{
 		// Spawn floor tile
 		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
@@ -114,7 +114,7 @@ void ASimpleGridDungeonInstance::SpawnCorridorFloorTiles()
 			
 			const FTransform TileTransform = FTransform(
 				FRotator::ZeroRotator,
-				GetPositionForCoordinate(Tile.Coordinate),
+				GetPositionForCoordinate(Coordinate),
 				FVector(1.0f, 1.0f, 1.0f));
 			
 			MeshComponent->SetWorldTransform(TileTransform);

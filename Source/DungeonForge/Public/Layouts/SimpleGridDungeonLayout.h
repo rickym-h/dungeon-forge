@@ -19,16 +19,16 @@ public:
 	USimpleGridDungeonLayout();
 
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
-	TArray<FGridTile> GetRoomTiles() const;
+	TArray<FGridCoordinate> GetRoomTiles() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
-	TArray<FGridTile> GetCorridorTiles() const;
+	TArray<FGridCoordinate> GetCorridorTiles() const;
 	
 	/**
 	 * Gets all tiles, including both room and corridor tiles.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
-	TArray<FGridTile> GetAllFloorTiles() const;
+	TArray<FGridCoordinate> GetAllFloorTiles() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
 	TArray<FGridEdge> GetDoorPositions(const float GridSize) const;
@@ -40,14 +40,14 @@ public:
 	TArray<FGridEdge> GetWallPositions(const float GridSize) const;
 
 	UFUNCTION()
-	void AddRoomTiles(const TArray<FGridTile>& InRoomTiles);
+	void AddRoomTiles(const TArray<FGridCoordinate>& InRoomTiles);
 	UFUNCTION()
-	void AddCorridorTiles(const TArray<FGridTile>& InCorridorTiles);
+	void AddCorridorTiles(const TArray<FGridCoordinate>& InCorridorTiles);
 	UFUNCTION()
 	void AddDoors(const TArray<FGridEdge>& InDoorLocations);
 
 protected:
-	TSet<FGridTile> RoomTiles;
-	TSet<FGridTile> CorridorTiles;
+	TSet<FGridCoordinate> RoomTiles;
+	TSet<FGridCoordinate> CorridorTiles;
 	TSet<FGridEdge> Doors;
 };
