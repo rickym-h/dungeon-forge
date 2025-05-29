@@ -31,13 +31,20 @@ public:
 	TArray<FGridTile> GetAllFloorTiles() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
-	TArray<FTransform> GetDoorPositions(float TileSize) const;
+	TArray<FGridEdge> GetDoorPositions(const float GridSize) const;
 	
 	/**
 	 * Imputes the wall positioning based on the room and corridor tiles. Excludes door positions.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
-	TArray<FGridEdge> GetWallPositions(const float TileSize) const;
+	TArray<FGridEdge> GetWallPositions(const float GridSize) const;
+
+	UFUNCTION()
+	void AddRoomTiles(const TArray<FGridTile>& InRoomTiles);
+	UFUNCTION()
+	void AddCorridorTiles(const TArray<FGridTile>& InCorridorTiles);
+	UFUNCTION()
+	void AddDoors(const TArray<FGridEdge>& InDoorLocations);
 
 protected:
 	TSet<FGridTile> RoomTiles;

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Instances/SimpleGridDungeonInstance.h"
-#include "Layouts/SimpleGridDungeonLayout.h"
 #include "UObject/Object.h"
 #include "SimpleGridDungeonGenerator.generated.h"
 

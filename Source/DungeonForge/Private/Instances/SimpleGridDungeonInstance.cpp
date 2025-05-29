@@ -19,22 +19,57 @@ ASimpleGridDungeonInstance::ASimpleGridDungeonInstance()
 
 void ASimpleGridDungeonInstance::GenerateLayout()
 {
-	Super::GenerateLayout();
-	UE_LOG(LogTemp, Log, TEXT("ASimpleGridDungeonInstance::GenerateLayout()"));
-
 	Layout = Generator->GenerateLayout();
 }
 
 void ASimpleGridDungeonInstance::SpawnDungeon()
 {
-	Super::SpawnDungeon();
-	UE_LOG(LogTemp, Log, TEXT("ASimpleGridDungeonInstance::SpawnDungeon()"));
+	// Spawn all floor tiles
+	SpawnRoomFloorTiles();
+	SpawnCorridorFloorTiles();
+	SpawnWallTiles();
+	SpawnDoorTiles();
 }
 
 void ASimpleGridDungeonInstance::GenerateDungeon()
 {
-	Super::GenerateDungeon();
 	UE_LOG(LogTemp, Log, TEXT("ASimpleGridDungeonInstance::GenerateDungeon()"));
+
+	ClearDungeon();
+	GenerateLayout();
+	SpawnDungeon();
+}
+
+void ASimpleGridDungeonInstance::ClearDungeon()
+{
+	while (!RoomFloorMeshes.IsEmpty())
+	{
+		if (UStaticMeshComponent* Mesh = RoomFloorMeshes.Pop())
+		{
+			Mesh->DestroyComponent();
+		}
+	}
+	while (!CorridorFloorMeshes.IsEmpty())
+	{
+		if (UStaticMeshComponent* Mesh = CorridorFloorMeshes.Pop())
+		{
+			Mesh->DestroyComponent();
+		}
+	}
+	while (!WallMeshes.IsEmpty())
+	{
+		if (UStaticMeshComponent* Mesh = WallMeshes.Pop())
+		{
+			Mesh->DestroyComponent();
+		}
+	}
+	while (!DoorMeshes.IsEmpty())
+	{
+		if (UStaticMeshComponent* Mesh = DoorMeshes.Pop())
+		{
+			Mesh->DestroyComponent();
+		}
+	}
 }
 
 // Called when the game starts or when spawned
@@ -44,3 +79,114 @@ void ASimpleGridDungeonInstance::BeginPlay()
 	
 }
 
+void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
+{
+	for (const FGridTile& Tile : Layout->GetRoomTiles())
+	{
+		// Spawn floor tile
+		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
+		{
+			MeshComponent->SetStaticMesh(RoomFloorMesh);
+			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+			
+			const FTransform TileTransform = FTransform(
+				FRotator::ZeroRotator,
+				GetPositionForCoordinate(Tile.Coordinate),
+				FVector(1.0f, 1.0f, 1.0f));
+			MeshComponent->SetWorldTransform(TileTransform);
+			MeshComponent->RegisterComponent();
+			
+			// Add to the persistent array
+			RoomFloorMeshes.Add(MeshComponent);
+		}
+	}
+}
+
+void ASimpleGridDungeonInstance::SpawnCorridorFloorTiles()
+{
+	for (const FGridTile& Tile : Layout->GetCorridorTiles())
+	{
+		// Spawn floor tile
+		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
+		{
+			MeshComponent->SetStaticMesh(CorridorFloorMesh);
+			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+			
+			const FTransform TileTransform = FTransform(
+				FRotator::ZeroRotator,
+				GetPositionForCoordinate(Tile.Coordinate),
+				FVector(1.0f, 1.0f, 1.0f));
+			
+			MeshComponent->SetWorldTransform(TileTransform);
+			MeshComponent->RegisterComponent();
+			
+			// Add to the persistent array
+			CorridorFloorMeshes.Add(MeshComponent);
+		}
+	}
+}
+
+void ASimpleGridDungeonInstance::SpawnWallTiles()
+{
+	for (const FGridEdge& Edge : Layout->GetWallPositions(GridSize))
+	{
+		// Spawn wall tile
+		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
+		{
+			MeshComponent->SetStaticMesh(WallMesh);
+			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+			
+			const FTransform EdgeTransform = FTransform(
+				GetRotationForEdge(Edge),
+				GetPositionForEdge(Edge),
+				FVector(1.0f, 1.0f, 1.0f)
+				);
+			
+			MeshComponent->SetWorldTransform(EdgeTransform);
+			MeshComponent->RegisterComponent();
+			
+			// Add to the persistent array
+			WallMeshes.Add(MeshComponent);
+		}
+	}
+}
+
+void ASimpleGridDungeonInstance::SpawnDoorTiles()
+{
+	for (const FGridEdge& Edge : Layout->GetDoorPositions(GridSize))
+	{
+		// Spawn door tile
+		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
+		{
+			MeshComponent->SetStaticMesh(DoorMesh);
+			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+			
+			const FTransform EdgeTransform = FTransform(
+				GetRotationForEdge(Edge),
+				GetPositionForEdge(Edge),
+				FVector(1.0f, 1.0f, 1.0f)
+				);
+			
+			MeshComponent->SetWorldTransform(EdgeTransform);
+			MeshComponent->RegisterComponent();
+			
+			// Add to the persistent array
+			DoorMeshes.Add(MeshComponent);
+		}
+	}
+}
+
+FVector ASimpleGridDungeonInstance::GetPositionForCoordinate(const FGridCoordinate& Coordinate) const
+{
+	return GetActorLocation() + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Coordinate, GridSize);
+}
+
+FVector ASimpleGridDungeonInstance::GetPositionForEdge(const FGridEdge& Edge) const
+{
+	return GetActorLocation() + ((UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Edge.CoordinateA, GridSize) + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Edge.CoordinateB, GridSize)) / 2.0f);
+}
+
+FRotator ASimpleGridDungeonInstance::GetRotationForEdge(const FGridEdge& Edge) const
+{
+	return (GetPositionForCoordinate(Edge.CoordinateB) - GetPositionForCoordinate(Edge.CoordinateA)).Rotation();
+}

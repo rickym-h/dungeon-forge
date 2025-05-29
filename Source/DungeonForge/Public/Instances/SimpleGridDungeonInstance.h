@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BaseDungeonInstance.h"
+#include "Layouts/GridCoordinateHelperLibrary.h"
 #include "SimpleGridDungeonInstance.generated.h"
 
 class USimpleGridDungeonGenerator;
@@ -20,7 +21,10 @@ public:
 
 	virtual void GenerateLayout() override;
 	virtual void SpawnDungeon() override;
+	UFUNCTION(Category="Generator Functions", CallInEditor)	
 	virtual void GenerateDungeon() override;
+	UFUNCTION(Category="Generator Functions", CallInEditor)
+	virtual void ClearDungeon() override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -37,4 +41,31 @@ protected:
 	bool bAllowCorridors = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings|Corridors", meta=(EditCondition="bAllowCorridors", ClampMin=1, ClampMax=20))
 	int32 CorridorLength = 1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	UStaticMesh* RoomFloorMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	UStaticMesh* CorridorFloorMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	UStaticMesh* WallMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	UStaticMesh* DoorMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
+	TArray<UStaticMeshComponent*> RoomFloorMeshes;
+	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
+	TArray<UStaticMeshComponent*> CorridorFloorMeshes;
+	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
+	TArray<UStaticMeshComponent*> WallMeshes;
+	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
+	TArray<UStaticMeshComponent*> DoorMeshes;
+	
+	void SpawnRoomFloorTiles();
+	void SpawnCorridorFloorTiles();
+	void SpawnWallTiles();
+	void SpawnDoorTiles();
+
+	FVector GetPositionForCoordinate(const FGridCoordinate& Coordinate) const;
+	FVector GetPositionForEdge(const FGridEdge& Edge) const;
+	FRotator GetRotationForEdge(const FGridEdge& Edge) const;
 };

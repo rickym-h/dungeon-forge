@@ -22,24 +22,15 @@ TArray<FGridTile> USimpleGridDungeonLayout::GetAllFloorTiles() const
 	TArray<FGridTile> AllTiles = RoomTiles.Array();
 	AllTiles.Append(CorridorTiles.Array());
 	return AllTiles;
-
-	
 }
 
-TArray<FTransform> USimpleGridDungeonLayout::GetDoorPositions(const float TileSize) const
+TArray<FGridEdge> USimpleGridDungeonLayout::GetDoorPositions(const float GridSize) const
 {
-	TArray<FTransform> DoorPositions;
-	for (const FGridEdge& Door : Doors)
-	{
-		const FVector PositionA = UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Door.CoordinateA, TileSize);
-		const FVector PositionB = UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Door.CoordinateB, TileSize);
-		const FVector MidPoint = (PositionA + PositionB) / 2.0f;
-		DoorPositions.Add(FTransform(MidPoint));
-	}
+	TArray<FGridEdge> DoorPositions = Doors.Array();
 	return DoorPositions;
 }
 
-TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float TileSize) const
+TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSize) const
 {
 	TSet<FGridEdge> WallPositions;
 	
@@ -57,5 +48,20 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float TileSiz
 	}
 
 	return WallPositions.Array();
+}
+
+void USimpleGridDungeonLayout::AddRoomTiles(const TArray<FGridTile>& InRoomTiles)
+{
+	this->RoomTiles.Append(InRoomTiles);
+}
+
+void USimpleGridDungeonLayout::AddCorridorTiles(const TArray<FGridTile>& InCorridorTiles)
+{
+	this->CorridorTiles.Append(InCorridorTiles);
+}
+
+void USimpleGridDungeonLayout::AddDoors(const TArray<FGridEdge>& InDoorLocations)
+{
+	this->Doors.Append(InDoorLocations);
 }
 
