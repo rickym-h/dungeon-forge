@@ -19,7 +19,15 @@ ASimpleGridDungeonInstance::ASimpleGridDungeonInstance()
 
 void ASimpleGridDungeonInstance::GenerateLayout()
 {
+	FDateTime StartTime = FDateTime::UtcNow();
+	Generator->SetNumRooms(RoomCount);
+	float TimeElapsedInMs = (FDateTime::UtcNow() - StartTime).GetTotalMilliseconds();
+	UE_LOG(LogTemp, Display, TEXT("Initialised generator in %fms"), TimeElapsedInMs)
+	
+	StartTime = FDateTime::UtcNow();
 	Layout = Generator->GenerateLayout();
+	TimeElapsedInMs = (FDateTime::UtcNow() - StartTime).GetTotalMilliseconds();
+	UE_LOG(LogTemp, Display, TEXT("Generated layout in %fms"), TimeElapsedInMs)
 }
 
 void ASimpleGridDungeonInstance::SpawnDungeon()
