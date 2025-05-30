@@ -58,14 +58,20 @@ public:
 	 * @return The generated layout.
 	 */
 	UFUNCTION(BlueprintCallable)
-	USimpleGridDungeonLayout* GenerateLayout(int32 NumRooms = 10);
+	USimpleGridDungeonLayout* GenerateLayout();
+	
+	void SetNumRooms(const int32 InRoomCount);
 
 protected:
+	int32 RoomCount;
+	TArray<TArray<FGridCoordinate>> PossibleRooms;
+	TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets;
+	
 	TArray<TArray<FGridCoordinate>> InitPossibleRooms();
 
 	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms);
 	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
-	void AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets, TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
+	void AddSingleRoomToLayout(TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
 	
 	UFUNCTION(BlueprintCallable)
 	static USimpleGridDungeonLayout* SimpleStaticLayout1();

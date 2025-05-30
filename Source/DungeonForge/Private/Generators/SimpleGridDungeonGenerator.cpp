@@ -97,20 +97,10 @@ USimpleGridDungeonGenerator::USimpleGridDungeonGenerator()
 {
 }
 
-USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout(const int32 NumRooms)
+USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 {	
 	USimpleGridDungeonLayout* Layout = NewObject<USimpleGridDungeonLayout>();
 	
-	// Populate PotentialRooms with some layouts (just squares and rectangles for now)
-	// TODO refactor to do this when parameters are updated
-	TArray<TArray<FGridCoordinate>> PossibleRooms = InitPossibleRooms();
-	
-	// Calculate every possible combination of two rooms.
-	const FDateTime StartTime = FDateTime::UtcNow();
-	const TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets = GenerateRoomComboOffsets(PossibleRooms);
-	const float TimeElapsedInMs = (FDateTime::UtcNow() - StartTime).GetTotalMilliseconds();
-	UE_LOG(LogTemp, Display, TEXT("Generated Room Offsets in %fms"), TimeElapsedInMs)
-
 	TArray<FDungeonRoom> RoomLayout = {};
 	TSet<FGridCoordinate> RoomLayoutUsedCoords;
 
@@ -124,9 +114,9 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout(const int3
 
 	TMap<FDungeonRoom, FDungeonRoom> RoomConnections;
 	// Place one less than the NumRooms, since we already added the first room
-	for (int i = 1; i < NumRooms; i++)
+	for (int i = 1; i < RoomCount; i++)
 	{
-		AddSingleRoomToLayout(RoomComboOffsets, PossibleRooms, RoomLayout, RoomLayoutUsedCoords, RoomConnections);
+		AddSingleRoomToLayout(RoomLayout, RoomLayoutUsedCoords, RoomConnections);
 	}
 	
 	// RoomLayout should be a list of all the rooms in the dungeon. Now we have to convert that to a USimpleGridDungeonLayout
@@ -179,6 +169,16 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout(const int3
 	return Layout;
 }
 
+void USimpleGridDungeonGenerator::SetNumRooms(const int32 InRoomCount)
+{
+	RoomCount = InRoomCount;
+	
+	// Populate PotentialRooms with some layouts (just squares and rectangles for now)
+	PossibleRooms = InitPossibleRooms();
+	// Calculate every possible combination of two rooms.
+	RoomComboOffsets = GenerateRoomComboOffsets(PossibleRooms);
+}
+
 TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 {
 	TArray<TArray<FGridCoordinate>> AlLRooms;
@@ -221,27 +221,27 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	AlLRooms.Sort([this](const TArray<FGridCoordinate>& Item1, const TArray<FGridCoordinate>& Item2) {
 		return FMath::FRand() < 0.5f;
 	});
-	TArray<TArray<FGridCoordinate>> PossibleRooms = {};
+	TArray<TArray<FGridCoordinate>> OutPossibleRooms = {};
 	
 	// Adds a random selection of rooms into generation
 	for (int i = 0; i < MaxRoomsInGen; i++)
 	{
-		PossibleRooms.Add(AlLRooms[i]);
+		OutPossibleRooms.Add(AlLRooms[i]);
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("Total sampled possible rooms for actual generation: %d"), PossibleRooms.Num());
-	return PossibleRooms;
+	UE_LOG(LogTemp, Warning, TEXT("Total sampled possible rooms for actual generation: %d"), OutPossibleRooms.Num());
+	return OutPossibleRooms;
 }
 
 TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms)
 {
-	TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets = {};
+	TArray<TArray<TArray<FGridCoordinate>>> OutRoomComboOffsets = {};
 
 	for (int i = 0; i < Rooms.Num(); i++)
 	{
 		TArray<TArray<FGridCoordinate>> SecondRoomConnections;
 		SecondRoomConnections.Init(TArray<FGridCoordinate>(), Rooms.Num());
-		RoomComboOffsets.Add(SecondRoomConnections);
+		OutRoomComboOffsets.Add(SecondRoomConnections);
 	}
 	
 	// Iterates over every room, and adds coord offsets from one room to the other
@@ -250,12 +250,12 @@ TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoo
 		for (int j = i; j < Rooms.Num(); j++)
 		{
 			const TArray<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(Rooms[i], Rooms[j]);
-			RoomComboOffsets[i][j] = ItoJOffsets;
+			OutRoomComboOffsets[i][j] = ItoJOffsets;
 
 		}
 	}
 	
-	return RoomComboOffsets;
+	return OutRoomComboOffsets;
 }
 
 TArray<FGridCoordinate> USimpleGridDungeonGenerator::GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB)
@@ -305,9 +305,7 @@ TArray<FGridCoordinate> USimpleGridDungeonGenerator::GenerateOffsetsForRooms(con
 	return OutArray;
 }
 
-void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets,
-                                                        TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom>& RoomLayout, TSet<FGridCoordinate>& RoomLayoutUsedCoords, TMap<FDungeonRoom,
-                                                        FDungeonRoom>& RoomConnections) const
+void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<FDungeonRoom>& RoomLayout, TSet<FGridCoordinate>& RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const
 {
 	// Take a new random room layout
 	const int NewRoomIndex = FMath::RandRange(0,PossibleRooms.Num()-1);
