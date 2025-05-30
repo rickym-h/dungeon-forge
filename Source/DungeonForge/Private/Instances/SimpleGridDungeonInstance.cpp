@@ -3,6 +3,7 @@
 
 #include "Instances/SimpleGridDungeonInstance.h"
 
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Generators/SimpleGridDungeonGenerator.h"
 #include "Layouts/SimpleGridDungeonLayout.h"
 
@@ -15,6 +16,15 @@ ASimpleGridDungeonInstance::ASimpleGridDungeonInstance()
 
 	Generator = CreateDefaultSubobject<USimpleGridDungeonGenerator>("Dungeon Generator");
 	Layout = CreateDefaultSubobject<USimpleGridDungeonLayout>("Dungeon Layout");
+	
+	RoomFloorMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("FloorMeshISM");
+	RoomFloorMeshISM->SetupAttachment(RootComponent);
+	CorridorFloorMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("CorridorFloorMeshISM");
+	CorridorFloorMeshISM->SetupAttachment(RootComponent);
+	WallMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("WallMeshISM");
+	WallMeshISM->SetupAttachment(RootComponent);
+	DoorMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("DoorMeshISM");
+	DoorMeshISM->SetupAttachment(RootComponent);
 }
 
 void ASimpleGridDungeonInstance::GenerateLayout()
@@ -43,41 +53,20 @@ void ASimpleGridDungeonInstance::GenerateDungeon()
 {
 	UE_LOG(LogTemp, Log, TEXT("ASimpleGridDungeonInstance::GenerateDungeon()"));
 
+	FDateTime StartT = FDateTime::UtcNow();
 	ClearDungeon();
 	GenerateLayout();
 	SpawnDungeon();
+	FDateTime FinishT = FDateTime::UtcNow();
+	UE_LOG(LogTemp, Log, TEXT("Generated Dungeon in %f milliseconds"), (FinishT - StartT).GetTotalMilliseconds());
 }
 
 void ASimpleGridDungeonInstance::ClearDungeon()
 {
-	while (!RoomFloorMeshes.IsEmpty())
-	{
-		if (UStaticMeshComponent* Mesh = RoomFloorMeshes.Pop())
-		{
-			Mesh->DestroyComponent();
-		}
-	}
-	while (!CorridorFloorMeshes.IsEmpty())
-	{
-		if (UStaticMeshComponent* Mesh = CorridorFloorMeshes.Pop())
-		{
-			Mesh->DestroyComponent();
-		}
-	}
-	while (!WallMeshes.IsEmpty())
-	{
-		if (UStaticMeshComponent* Mesh = WallMeshes.Pop())
-		{
-			Mesh->DestroyComponent();
-		}
-	}
-	while (!DoorMeshes.IsEmpty())
-	{
-		if (UStaticMeshComponent* Mesh = DoorMeshes.Pop())
-		{
-			Mesh->DestroyComponent();
-		}
-	}
+	RoomFloorMeshISM->ClearInstances();
+	CorridorFloorMeshISM->ClearInstances();
+	WallMeshISM->ClearInstances();
+	DoorMeshISM->ClearInstances();
 }
 
 // Called when the game starts or when spawned
@@ -89,99 +78,68 @@ void ASimpleGridDungeonInstance::BeginPlay()
 
 void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
 {
+	TArray<FTransform> RoomFloorTransforms;
 	for (const FGridCoordinate& Coordinate : Layout->GetRoomTiles())
 	{
-		// Spawn floor tile
-		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
-		{
-			MeshComponent->SetStaticMesh(RoomFloorMesh);
-			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-			
-			const FTransform TileTransform = FTransform(
-				FRotator::ZeroRotator,
-				GetPositionForCoordinate(Coordinate),
-				FVector(1.0f, 1.0f, 1.0f));
-			MeshComponent->SetWorldTransform(TileTransform);
-			MeshComponent->RegisterComponent();
-			
-			// Add to the persistent array
-			RoomFloorMeshes.Add(MeshComponent);
-		}
+		const FTransform TileTransform = FTransform(
+			FRotator::ZeroRotator,
+			GetPositionForCoordinate(Coordinate),
+			FVector(1.0f, 1.0f, 1.0f));
+		
+		RoomFloorTransforms.Add(TileTransform);
 	}
+	RoomFloorMeshISM->AddInstances(RoomFloorTransforms, false);
+	RoomFloorMeshISM->SetStaticMesh(RoomFloorMesh);
 }
 
 void ASimpleGridDungeonInstance::SpawnCorridorFloorTiles()
 {
+	TArray<FTransform> CorridorFloorTransforms;
 	for (const FGridCoordinate& Coordinate : Layout->GetCorridorTiles())
 	{
-		// Spawn floor tile
-		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
-		{
-			MeshComponent->SetStaticMesh(CorridorFloorMesh);
-			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-			
-			const FTransform TileTransform = FTransform(
-				FRotator::ZeroRotator,
-				GetPositionForCoordinate(Coordinate),
-				FVector(1.0f, 1.0f, 1.0f));
-			
-			MeshComponent->SetWorldTransform(TileTransform);
-			MeshComponent->RegisterComponent();
-			
-			// Add to the persistent array
-			CorridorFloorMeshes.Add(MeshComponent);
-		}
+		const FTransform TileTransform = FTransform(
+			FRotator::ZeroRotator,
+			GetPositionForCoordinate(Coordinate),
+			FVector(1.0f, 1.0f, 1.0f));
+		
+		CorridorFloorTransforms.Add(TileTransform);
 	}
+	CorridorFloorMeshISM->AddInstances(CorridorFloorTransforms, false);
+	CorridorFloorMeshISM->SetStaticMesh(CorridorFloorMesh);
 }
 
 void ASimpleGridDungeonInstance::SpawnWallTiles()
 {
+	TArray<FTransform> WallTransforms;
 	for (const FGridEdge& Edge : Layout->GetWallPositions(GridSize))
 	{
-		// Spawn wall tile
-		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
-		{
-			MeshComponent->SetStaticMesh(WallMesh);
-			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-			
-			const FTransform EdgeTransform = FTransform(
-				GetRotationForEdge(Edge),
-				GetPositionForEdge(Edge),
-				FVector(1.0f, 1.0f, 1.0f)
-				);
-			
-			MeshComponent->SetWorldTransform(EdgeTransform);
-			MeshComponent->RegisterComponent();
-			
-			// Add to the persistent array
-			WallMeshes.Add(MeshComponent);
-		}
+		const FTransform EdgeTransform = FTransform(
+			GetRotationForEdge(Edge),
+			GetPositionForEdge(Edge),
+			FVector(1.0f, 1.0f, 1.0f)
+			);
+		
+		WallTransforms.Add(EdgeTransform);
 	}
+	WallMeshISM->AddInstances(WallTransforms, false);
+	WallMeshISM->SetStaticMesh(WallMesh);
 }
 
 void ASimpleGridDungeonInstance::SpawnDoorTiles()
 {
+	TArray<FTransform> DoorTransforms;
 	for (const FGridEdge& Edge : Layout->GetDoorPositions(GridSize))
 	{
-		// Spawn door tile
-		if (UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(this))
-		{
-			MeshComponent->SetStaticMesh(DoorMesh);
-			MeshComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-			
-			const FTransform EdgeTransform = FTransform(
-				GetRotationForEdge(Edge),
-				GetPositionForEdge(Edge),
-				FVector(1.0f, 1.0f, 1.0f)
-				);
-			
-			MeshComponent->SetWorldTransform(EdgeTransform);
-			MeshComponent->RegisterComponent();
-			
-			// Add to the persistent array
-			DoorMeshes.Add(MeshComponent);
-		}
+		const FTransform EdgeTransform = FTransform(
+			GetRotationForEdge(Edge),
+			GetPositionForEdge(Edge),
+			FVector(1.0f, 1.0f, 1.0f)
+			);
+		
+		DoorTransforms.Add(EdgeTransform);
 	}
+	DoorMeshISM->AddInstances(DoorTransforms, false);
+	DoorMeshISM->SetStaticMesh(DoorMesh);
 }
 
 FVector ASimpleGridDungeonInstance::GetPositionForCoordinate(const FGridCoordinate& Coordinate) const

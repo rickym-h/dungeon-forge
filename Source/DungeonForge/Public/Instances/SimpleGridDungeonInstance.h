@@ -35,7 +35,7 @@ protected:
 	UPROPERTY()
 	USimpleGridDungeonLayout* Layout;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings", meta=(ClampMin=1, ClampMax=100))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings", meta=(ClampMin=1, ClampMax=1000))
 	int32 RoomCount = 5;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator Settings|Corridors")
 	bool bAllowCorridors = true;
@@ -51,15 +51,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
 	UStaticMesh* DoorMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
-	TArray<UStaticMeshComponent*> RoomFloorMeshes;
-	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
-	TArray<UStaticMeshComponent*> CorridorFloorMeshes;
-	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
-	TArray<UStaticMeshComponent*> WallMeshes;
-	UPROPERTY(VisibleAnywhere, Category = "Static Meshes")
-	TArray<UStaticMeshComponent*> DoorMeshes;
-	
+	UPROPERTY()
+	UInstancedStaticMeshComponent* RoomFloorMeshISM;
+	UPROPERTY()
+	UInstancedStaticMeshComponent* CorridorFloorMeshISM;
+	UPROPERTY()
+	UInstancedStaticMeshComponent* WallMeshISM;
+	UPROPERTY()
+	UInstancedStaticMeshComponent* DoorMeshISM;
+
 	void SpawnRoomFloorTiles();
 	void SpawnCorridorFloorTiles();
 	void SpawnWallTiles();

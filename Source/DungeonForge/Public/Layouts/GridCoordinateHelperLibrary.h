@@ -40,6 +40,7 @@ struct FGridCoordinate
 	}
 
 	float DistanceFromCentre() const;
+	FGridCoordinate Inverse() const;
 };
 
 /**
