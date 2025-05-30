@@ -123,10 +123,12 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 	{
 		RoomLayoutUsedCoords.Add(Coord);
 	}
+
+	TMap<FDungeonRoom, FDungeonRoom> RoomConnections;
 	// Place one less than the NumRooms, since we already added the first room
 	for (int i = 1; i < NumRooms; i++)
 	{
-		AddSingleRoomToLayout(RoomComboOffsets, PossibleRooms, RoomLayout, RoomLayoutUsedCoords);
+		AddSingleRoomToLayout(RoomComboOffsets, PossibleRooms, RoomLayout, RoomLayoutUsedCoords, RoomConnections);
 	}
 	
 	// RoomLayout should be a list of all the rooms in the dungeon. Now we have to convert that to a USimpleGridDungeonLayout
@@ -151,6 +153,16 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 	}
 
 	Layout->bImputesWallPositions = false;
+
+	FlushPersistentDebugLines(GetWorld());
+	// Add doors between the rooms
+	for (TTuple<FDungeonRoom, FDungeonRoom> Connection : RoomConnections)
+	{
+		DrawDebugLine(GetWorld(),
+			UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Connection.Key.GlobalCentre, 500)+FVector(0,0,100),
+			UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Connection.Value.GlobalCentre, 500)+FVector(0,0,100),
+			FColor::Green, true, 0.0f, 0, 10.0f);
+	}
 	
 	return Layout;
 }
@@ -282,45 +294,50 @@ TArray<FGridCoordinate> USimpleGridDungeonGenerator::GenerateOffsetsForRooms(con
 }
 
 void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets,
-	TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom>& RoomLayout, TSet<FGridCoordinate>& RoomLayoutUsedCoords) const
+                                                        TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom>& RoomLayout, TSet<FGridCoordinate>& RoomLayoutUsedCoords, TMap<FDungeonRoom,
+                                                        FDungeonRoom>& RoomConnections) const
 {
 	// Take a new random room layout
 	const int NewRoomIndex = FMath::RandRange(0,PossibleRooms.Num()-1);
 	TArray<FGridCoordinate> NewRoomLocalCoords = PossibleRooms[NewRoomIndex];
 
 	// Find every existing room and their PossibleRooms index
-	// Find max manhattan distance across all placed rooms, and the random room layout
-	TSet<FGridCoordinate> PlaceableLocations;
-	for (FDungeonRoom Room : RoomLayout)
+	TMap<FGridCoordinate, FDungeonRoom> PlaceableLocations;
+	for (FDungeonRoom ExistingRoom : RoomLayout)
 	{
 		// Find all placeable points -> filter out direct centre overlaps
-		for (FGridCoordinate PossibleLocationOffset : RoomComboOffsets[Room.PossibleRoomsIndex][NewRoomIndex])
+		for (FGridCoordinate RoomOffset : RoomComboOffsets[ExistingRoom.PossibleRoomsIndex][NewRoomIndex])
 		{
-			FGridCoordinate PossibleLocation = Room.GlobalCentre + PossibleLocationOffset;
+			FGridCoordinate NewRoomGlobalOrigin = ExistingRoom.GlobalCentre + RoomOffset;
 
 			// Get Global Coords for this hypothetical dungeon
 			bool CanUse = true;
 			for (FGridCoordinate LocalOffsetFromPotentialCentre : NewRoomLocalCoords)
 			{
-				FGridCoordinate PotentialGlobalCoord = LocalOffsetFromPotentialCentre + PossibleLocation;
-				if (RoomLayoutUsedCoords.Contains(PotentialGlobalCoord))
+				if (RoomLayoutUsedCoords.Contains(LocalOffsetFromPotentialCentre + NewRoomGlobalOrigin))
 				{
 					CanUse = false;
+					break;
 				}
 			}
 			if (CanUse)
 			{
-				PlaceableLocations.Add(PossibleLocation);
+				if (!PlaceableLocations.Contains(NewRoomGlobalOrigin))
+				{
+					PlaceableLocations.Add(NewRoomGlobalOrigin, ExistingRoom);
+				}
 			}
 		}
 	}
 
-	TArray<FGridCoordinate> ListOfSpawnLocations =  PlaceableLocations.Array();
+	TArray<FGridCoordinate> ListOfSpawnLocations;
+	PlaceableLocations.GetKeys(ListOfSpawnLocations);
 
-	// Select a random room
+	// Select a random location to place the new room
 	const FGridCoordinate RoomCentre = ListOfSpawnLocations[FMath::RandRange(0, ListOfSpawnLocations.Num() - 1)];
 	const FDungeonRoom NewRoom = FDungeonRoom(RoomCentre, NewRoomLocalCoords, NewRoomIndex);
 	RoomLayout.Add(NewRoom);
+	RoomConnections.Add(NewRoom, PlaceableLocations[RoomCentre]);
 	
 	// Update global set of coord tiles
 	for (FGridCoordinate LocalCoord : NewRoom.LocalCoordOffsets)

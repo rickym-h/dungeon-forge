@@ -18,8 +18,7 @@ struct FDungeonRoom
 
 	UPROPERTY()
 	TArray<FGridCoordinate> LocalCoordOffsets;
-
-
+	
 	int PossibleRoomsIndex;
 
 	FDungeonRoom();
@@ -29,7 +28,20 @@ struct FDungeonRoom
 	static int MaxManhattanDistanceBetweenRooms(TArray<FGridCoordinate> A, TArray<FGridCoordinate> B);
 	static bool DoRoomsOverlap(FDungeonRoom A, FDungeonRoom B);
 	static bool AreRoomsTouching(const FDungeonRoom& A, const FDungeonRoom& B);
+
+	bool operator==(const FDungeonRoom& Other) const
+	{
+		return GlobalCentre == Other.GlobalCentre;
+	}
+	bool operator!=(const FDungeonRoom& Other) const
+	{
+		return !(*this == Other);
+	}
 };
+FORCEINLINE uint32 GetTypeHash(const FDungeonRoom& DungeonRoom)
+{
+	return FCrc::MemCrc32(&DungeonRoom.GlobalCentre, sizeof(DungeonRoom.GlobalCentre));
+}
 /**
  * 
  */
@@ -53,7 +65,7 @@ protected:
 
 	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms);
 	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
-	void AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets, TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords) const;
+	void AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets, TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
 	
 	UFUNCTION(BlueprintCallable)
 	static USimpleGridDungeonLayout* SimpleStaticLayout1();
