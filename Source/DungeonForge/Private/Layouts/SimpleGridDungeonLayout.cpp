@@ -44,7 +44,7 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSiz
 			{
 				if (!AllCoordinates.Contains(NeighbourCoord))
 				{
-					WallPositions.Add(FGridEdge(Coord, NeighbourCoord, false));
+					WallPositions.Add(FGridEdge(Coord, NeighbourCoord));
 				}
 			}
 		}
@@ -52,7 +52,8 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSiz
 		return WallPositions.Array();
 	} else
 	{
-		return Walls.Array();
+		// Make sure to exclude any possible door tiles that may overlap with the wall tiles.
+		return Walls.Difference(Doors).Array();
 	}
 	
 }

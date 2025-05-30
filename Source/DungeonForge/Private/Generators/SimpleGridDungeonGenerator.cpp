@@ -97,10 +97,8 @@ USimpleGridDungeonGenerator::USimpleGridDungeonGenerator()
 {
 }
 
-USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
-{
-	constexpr int32 NumRooms = 10;
-	
+USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout(const int32 NumRooms)
+{	
 	USimpleGridDungeonLayout* Layout = NewObject<USimpleGridDungeonLayout>();
 	
 	// Populate PotentialRooms with some layouts (just squares and rectangles for now)
@@ -148,7 +146,7 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 
 		for (const auto& [Key, Value] : WallTiles)
 		{
-			Layout->AddWalls({FGridEdge(Key, Value, false)});
+			Layout->AddWalls({FGridEdge(Key, Value)});
 		}
 	}
 
@@ -158,10 +156,24 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 	// Add doors between the rooms
 	for (TTuple<FDungeonRoom, FDungeonRoom> Connection : RoomConnections)
 	{
-		DrawDebugLine(GetWorld(),
-			UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Connection.Key.GlobalCentre, 500)+FVector(0,0,100),
-			UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Connection.Value.GlobalCentre, 500)+FVector(0,0,100),
-			FColor::Green, true, 0.0f, 0, 10.0f);
+		// Find tiles with an adjacent tile in the other room
+		TMap<FGridCoordinate, FGridCoordinate> PotentialDoorTiles;
+		for (const FGridCoordinate Coord : Connection.Key.GetGlobalCoordOffsets())
+		{
+			for (const FGridCoordinate AdjacentCoord : UGridCoordinateHelperLibrary::GetAdjacentCoordinates(Coord))
+			{
+				if (Connection.Value.GetGlobalCoordOffsets().Contains(AdjacentCoord))
+				{
+					PotentialDoorTiles.Add(Coord, AdjacentCoord);
+				}
+			}
+		}
+		// Pick a random tile to place the door
+		TArray<FGridCoordinate> Keys;
+		PotentialDoorTiles.GetKeys(Keys);
+		const FGridCoordinate DoorTile = Keys[FMath::RandRange(0, Keys.Num() - 1)];
+		const FGridCoordinate DoorTarget = PotentialDoorTiles[DoorTile];
+		Layout->AddDoors({FGridEdge(DoorTile, DoorTarget)});
 	}
 	
 	return Layout;
@@ -169,7 +181,7 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 
 TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 {
-	TArray<TArray<FGridCoordinate>> AlLRooms;;
+	TArray<TArray<FGridCoordinate>> AlLRooms;
 	
 	//Iterate over every rectangle between MinSize and MaxSize
 	constexpr int MinSize = 2;
@@ -387,7 +399,7 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::SimpleStaticLayout1()
 		{
 			if (Layout->GetRoomTiles().Contains(AdjacentCoord))
 			{
-				Layout->AddDoors({FGridEdge(CorridorCoord, AdjacentCoord, false)});
+				Layout->AddDoors({FGridEdge(CorridorCoord, AdjacentCoord)});
 			}
 		}
 	}
