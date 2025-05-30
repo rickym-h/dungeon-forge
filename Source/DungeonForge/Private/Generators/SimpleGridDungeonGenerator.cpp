@@ -192,21 +192,19 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 		{
 			// Instead of just creating a box from 0->Width and 0->Height, we offset
 			// the box by half the width and height so the centre of the room is roughly in the middle
-			const int W_Neg = -(Width+1) / 2;
-			const int W_Pos = W_Neg + Width;
-			const int H_Neg = -(Height+1) / 2;
-			const int H_Pos = H_Neg + Height;
+			const int W_Neg = -(Width) / 2;
+			const int H_Neg = -(Height) / 2;
 
 			// Create the actual room representation
 			TArray<FGridCoordinate> RoomOffsetLayout;
-			for (int W = W_Neg; W <= W_Pos; W++)
+			for (int X = W_Neg; X < W_Neg + Width; X++)
 			{
-				for (int H = H_Neg; H <= H_Pos; H++)
+				for (int Y = H_Neg; Y < H_Neg + Height; Y++)
 				{
-					RoomOffsetLayout.Add(FGridCoordinate(W,H));
+					RoomOffsetLayout.Add(FGridCoordinate(X,Y));
 				}
 			}
-			
+			UE_LOG(LogTemp, Warning, TEXT("RoomOffsetLayout: %d, %d with %d coordinates"), Width, Height, RoomOffsetLayout.Num());
 			AlLRooms.Add(RoomOffsetLayout);
 		}
 	}
@@ -252,6 +250,20 @@ TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoo
 			const TArray<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(Rooms[i], Rooms[j]);
 			OutRoomComboOffsets[i][j] = ItoJOffsets;
 
+			// If the other room is a copy of itself, the other room should have the same offsets as the first room
+			if (i == j)
+			{
+				OutRoomComboOffsets[j][i] = ItoJOffsets;
+				continue;
+			}
+			
+			// The offsets for the second room to the first one should just be the inverse of these generated offsets
+			TArray<FGridCoordinate> JtoIOffsets;
+			for (FGridCoordinate Offset : ItoJOffsets)
+			{
+				JtoIOffsets.Add(Offset.Inverse());
+			}
+			OutRoomComboOffsets[j][i] = JtoIOffsets;
 		}
 	}
 	

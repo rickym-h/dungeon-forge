@@ -28,6 +28,11 @@ float FGridCoordinate::DistanceFromCentre() const
 	return FMath::Sqrt(static_cast<float>(FMath::Square(X) + FMath::Square(Y)));
 }
 
+FGridCoordinate FGridCoordinate::Inverse() const
+{
+	return FGridCoordinate(-this->X, -this->Y);
+}
+
 FGridEdge::FGridEdge()
 {
 }
