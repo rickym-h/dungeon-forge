@@ -7,6 +7,29 @@
 #include "UObject/Object.h"
 #include "SimpleGridDungeonGenerator.generated.h"
 
+
+USTRUCT()
+struct FDungeonRoom
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGridCoordinate GlobalCentre;
+
+	UPROPERTY()
+	TArray<FGridCoordinate> LocalCoordOffsets;
+
+
+	int PossibleRoomsIndex;
+
+	FDungeonRoom();
+	FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets);
+	FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex);
+	TArray<FGridCoordinate> GetGlobalCoordOffsets() const;
+	static int MaxManhattanDistanceBetweenRooms(TArray<FGridCoordinate> A, TArray<FGridCoordinate> B);
+	static bool DoRoomsOverlap(FDungeonRoom A, FDungeonRoom B);
+	static bool AreRoomsTouching(const FDungeonRoom& A, const FDungeonRoom& B);
+};
 /**
  * 
  */
@@ -18,11 +41,21 @@ class DUNGEONFORGE_API USimpleGridDungeonGenerator : public UObject
 	USimpleGridDungeonGenerator();
 
 public:
-	
 	/**
 	 * A very simple dungeon generator which keeps adding rooms in an arbitrary position to the layout until it reaches a certain room count.
 	 * @return The generated layout.
 	 */
 	UFUNCTION(BlueprintCallable)
 	USimpleGridDungeonLayout* GenerateLayout();
+
+protected:
+	TArray<TArray<FGridCoordinate>> InitPossibleRooms();
+
+	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms);
+	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
+	void AddSingleRoomToLayout(TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets, TArray<TArray<FGridCoordinate>> PossibleRooms, TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords) const;
+	
+	UFUNCTION(BlueprintCallable)
+	static USimpleGridDungeonLayout* SimpleStaticLayout1();
+	
 };

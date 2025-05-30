@@ -34,7 +34,7 @@ public:
 	TArray<FGridEdge> GetDoorPositions(const float GridSize) const;
 	
 	/**
-	 * Imputes the wall positioning based on the room and corridor tiles. Excludes door positions.
+	 * Imputes the wall positioning based on the room and corridor tiles. Excludes door positions. Adds to existing wall positions.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
 	TArray<FGridEdge> GetWallPositions(const float GridSize) const;
@@ -44,10 +44,16 @@ public:
 	UFUNCTION()
 	void AddCorridorTiles(const TArray<FGridCoordinate>& InCorridorTiles);
 	UFUNCTION()
+	void AddWalls(const TArray<FGridEdge>& InWallLocations);
+	UFUNCTION()
 	void AddDoors(const TArray<FGridEdge>& InDoorLocations);
+
+	UPROPERTY()
+	bool bImputesWallPositions = true;
 
 protected:
 	TSet<FGridCoordinate> RoomTiles;
 	TSet<FGridCoordinate> CorridorTiles;
+	TSet<FGridEdge> Walls;
 	TSet<FGridEdge> Doors;
 };
