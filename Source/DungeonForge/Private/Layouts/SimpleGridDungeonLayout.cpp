@@ -32,22 +32,29 @@ TArray<FGridEdge> USimpleGridDungeonLayout::GetDoorPositions(const float GridSiz
 
 TArray<FGridEdge> USimpleGridDungeonLayout::GetWallPositions(const float GridSize) const
 {
-	TSet<FGridEdge> WallPositions;
-
-	// Find all the coordinates that are adjacent to a floor tile and add a wall between them if the adjacent tile is not a floor tile.
-	TSet<FGridCoordinate> AllCoordinates = TSet<FGridCoordinate>(GetAllFloorTiles());
-	for (const FGridCoordinate& Coord : AllCoordinates)
+	if (bImputesWallPositions)
 	{
-		for (const FGridCoordinate& NeighbourCoord : UGridCoordinateHelperLibrary::GetAdjacentCoordinates(Coord))
+		TSet<FGridEdge> WallPositions;
+
+		// Find all the coordinates that are adjacent to a floor tile and add a wall between them if the adjacent tile is not a floor tile.
+		TSet<FGridCoordinate> AllCoordinates = TSet<FGridCoordinate>(GetAllFloorTiles());
+		for (const FGridCoordinate& Coord : AllCoordinates)
 		{
-			if (!AllCoordinates.Contains(NeighbourCoord))
+			for (const FGridCoordinate& NeighbourCoord : UGridCoordinateHelperLibrary::GetAdjacentCoordinates(Coord))
 			{
-				WallPositions.Add(FGridEdge(Coord, NeighbourCoord, false));
+				if (!AllCoordinates.Contains(NeighbourCoord))
+				{
+					WallPositions.Add(FGridEdge(Coord, NeighbourCoord, false));
+				}
 			}
 		}
-	}
 
-	return WallPositions.Array();
+		return WallPositions.Array();
+	} else
+	{
+		return Walls.Array();
+	}
+	
 }
 
 void USimpleGridDungeonLayout::AddRoomTiles(const TArray<FGridCoordinate>& InRoomTiles)
@@ -58,6 +65,11 @@ void USimpleGridDungeonLayout::AddRoomTiles(const TArray<FGridCoordinate>& InRoo
 void USimpleGridDungeonLayout::AddCorridorTiles(const TArray<FGridCoordinate>& InCorridorTiles)
 {
 	this->CorridorTiles.Append(InCorridorTiles);
+}
+
+void USimpleGridDungeonLayout::AddWalls(const TArray<FGridEdge>& InWallLocations)
+{
+	this->Walls.Append(InWallLocations);
 }
 
 void USimpleGridDungeonLayout::AddDoors(const TArray<FGridEdge>& InDoorLocations)

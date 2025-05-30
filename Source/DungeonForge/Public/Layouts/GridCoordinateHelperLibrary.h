@@ -32,6 +32,12 @@ struct FGridCoordinate
 	{
 		return !(*this == Other);
 	}
+	
+	FGridCoordinate operator+(const FGridCoordinate& GlobalCentre) const
+	{
+		const FGridCoordinate Temp = FGridCoordinate(X + GlobalCentre.X, Y + GlobalCentre.Y);
+		return Temp;
+	}
 
 	float DistanceFromCentre() const;
 };

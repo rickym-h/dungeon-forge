@@ -41,7 +41,7 @@ USimpleGridDungeonLayout* UBSPDungeonGenerator::GenerateLayout()
 
 	// Init a single large dungeon room
 	// Hardcoded to 30x30 for now, but will be configurable later
-	TArray<FRectBox> Rooms = {FRectBox(FGridCoordinate(), FGridCoordinate(29, 29))};
+	TArray<FRectBox> Rooms = {FRectBox(FGridCoordinate(), FGridCoordinate(9, 9))};
 
 	constexpr int32 CorridorLength = 1;
 	constexpr int32 MinRoomWidth = 2;
