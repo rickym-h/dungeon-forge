@@ -32,27 +32,21 @@ FGridEdge::FGridEdge()
 {
 }
 
-FGridEdge::FGridEdge(const FGridCoordinate& InCoordinateA, const FGridCoordinate& InCoordinateB, const bool bInDirected)
+FGridEdge::FGridEdge(const FGridCoordinate& InCoordinateA, const FGridCoordinate& InCoordinateB)
 {
 	CoordinateA = InCoordinateA;
 	CoordinateB = InCoordinateB;
-	bDirected = bInDirected;
+	Sort();
 }
 
-FGridEdge FGridEdge::Sorted() const
+void FGridEdge::Sort()
 {
-	if (this->bDirected)
-	{
-		return *this; // Since coordinate is directed, do not override order.
-	}
-	if (GetTypeHash(CoordinateA) < GetTypeHash(CoordinateB))
-	{
-		return *this; // CoordinateA is less than CoordinateB, return as is.
-	}
-	else
-	{
-		return FGridEdge(CoordinateB, CoordinateA, false); // Swap coordinates to maintain order.
-	}
+	if (GetTypeHash(CoordinateA) < GetTypeHash(CoordinateB)) { return; }
+
+	// swap coordinates
+	const FGridCoordinate Temp = CoordinateA;
+	CoordinateA = CoordinateB;
+	CoordinateB = Temp;
 }
 
 TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal)

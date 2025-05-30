@@ -58,7 +58,7 @@ public:
 	 * @return The generated layout.
 	 */
 	UFUNCTION(BlueprintCallable)
-	USimpleGridDungeonLayout* GenerateLayout();
+	USimpleGridDungeonLayout* GenerateLayout(int32 NumRooms = 10);
 
 protected:
 	TArray<TArray<FGridCoordinate>> InitPossibleRooms();

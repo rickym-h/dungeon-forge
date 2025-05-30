@@ -60,31 +60,21 @@ struct FGridEdge
 	GENERATED_BODY()
 	
 	FGridEdge();
-	FGridEdge(const FGridCoordinate& InCoordinateA, const FGridCoordinate& InCoordinateB, const bool bInDirected);
+	FGridEdge(const FGridCoordinate& InCoordinateA, const FGridCoordinate& InCoordinateB);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGridCoordinate CoordinateA;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGridCoordinate CoordinateB;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bDirected = false; // If true, the edge is directed from CoordinateA to CoordinateB
 	
 	/**
 	 * If directed, the edge is considered to go from CoordinateA to CoordinateB. Otherwise edge is considered identical to another edge with A and B swapped.
 	 */
 	bool operator==(const FGridEdge& Other) const
 	{
-		if (bDirected)
-		{
-			return CoordinateA == Other.CoordinateA && CoordinateB == Other.CoordinateB;
-		}
-		else
-		{
-			return (CoordinateA == Other.CoordinateA && CoordinateB == Other.CoordinateB) ||
-				   (CoordinateA == Other.CoordinateB && CoordinateB == Other.CoordinateA);
-		}
+		return (CoordinateA == Other.CoordinateA && CoordinateB == Other.CoordinateB) ||
+			   (CoordinateA == Other.CoordinateB && CoordinateB == Other.CoordinateA);
 	}
 
 	bool operator!=(const FGridEdge& Other) const
@@ -98,6 +88,7 @@ struct FGridEdge
 	 * Useful for comparisons with undirected edges if CoordinateA and CoordinateB are swapped.
 	 */
 	FGridEdge Sorted() const;
+	void Sort();
 };
 
 /**
@@ -106,16 +97,7 @@ struct FGridEdge
  */
 FORCEINLINE uint32 GetTypeHash(const FGridEdge& Edge)
 {
-	if (Edge.bDirected)
-	{
-		return FCrc::MemCrc32(&Edge, sizeof(Edge));
-	}
-	else
-	{
-		// If edge is undirected, get the sorted version to ensure edges are the same regardless of order.
-		const FGridEdge Temp = Edge.Sorted();
-		return FCrc::MemCrc32(&Temp, sizeof(Temp));
-	}
+	return FCrc::MemCrc32(&Edge, sizeof(Edge));
 }
 
 /**
