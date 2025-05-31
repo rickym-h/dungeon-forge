@@ -54,17 +54,17 @@ void FGridEdge::Sort()
 	CoordinateB = Temp;
 }
 
-TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal)
+TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal, const int32 Direction)
 {
 	TArray<FGridCoordinate> AdjacentCoordinates;
 
 	// Add orthogonal coordinates
-	AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X + 1, Coordinate.Y));
-	AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X - 1, Coordinate.Y));
-	AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X, Coordinate.Y + 1));
-	AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X, Coordinate.Y - 1));
+	if (Direction == 0 || Direction == 2) AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X + 1, Coordinate.Y));
+	if (Direction == 0 || Direction == 4) AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X - 1, Coordinate.Y));
+	if (Direction == 0 || Direction == 1) AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X, Coordinate.Y + 1));
+	if (Direction == 0 || Direction == 3) AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X, Coordinate.Y - 1));
 
-	if (bIncludeDiagonal)
+	if (bIncludeDiagonal && Direction == 0)
 	{
 		// Add diagonal coordinates
 		AdjacentCoordinates.Add(FGridCoordinate(Coordinate.X + 1, Coordinate.Y + 1));
@@ -79,4 +79,21 @@ TArray<FGridCoordinate> UGridCoordinateHelperLibrary::GetAdjacentCoordinates(con
 FVector UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(const FGridCoordinate& Coordinate, const float TileSize)
 {
 	return FVector(Coordinate.X * TileSize, Coordinate.Y * TileSize, 0.0f);
+}
+
+TArray<FGridCoordinate> UGridCoordinateHelperLibrary::Expand(TArray<FGridCoordinate> RoomRepresentation, const int32 ExpansionDistance,
+	const bool bIncludeDiagonal, const int32 Direction)
+{
+	TSet<FGridCoordinate> RoomRepresentationSet = TSet(RoomRepresentation);
+
+	for (int i = 0; i < ExpansionDistance; i++)
+	{
+		for (FGridCoordinate Coordinate : RoomRepresentation)
+		{
+			RoomRepresentationSet.Append(GetAdjacentCoordinates(Coordinate, bIncludeDiagonal, Direction));
+		}
+		RoomRepresentation = RoomRepresentationSet.Array();
+	}
+	
+	return RoomRepresentationSet.Array();
 }
