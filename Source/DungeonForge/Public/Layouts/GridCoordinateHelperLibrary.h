@@ -111,8 +111,19 @@ class DUNGEONFORGE_API UGridCoordinateHelperLibrary : public UBlueprintFunctionL
 
 public:
 	UFUNCTION(BlueprintPure)
-	static TArray<FGridCoordinate> GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal = false);
+	static TArray<FGridCoordinate> GetAdjacentCoordinates(const FGridCoordinate& Coordinate, const bool bIncludeDiagonal = false, int32 Direction = 0);
 	
 	UFUNCTION(BlueprintPure)
 	static FVector GetWorldPositionFromGridCoordinate(const FGridCoordinate& Coordinate, const float TileSize = 100.0f);
+
+	/**
+	 * 
+	 * @param RoomRepresentation An array of coordinates representing the room.
+	 * @param ExpansionDistance The distance to expand the room by.
+	 * @param bIncludeDiagonal Whether to include diagonal coordinates when expanding (square becomes a square vs square becomes a cross)
+	 * @param Direction Specific a direction. 0 means every direction. 1 means only up, 2 means only right, 3 means only down, 4 means only left.
+	 * @return The expanded room.
+	 */
+	UFUNCTION(BlueprintPure)
+	static TArray<FGridCoordinate> Expand(TArray<FGridCoordinate> RoomRepresentation, const int32 ExpansionDistance, const bool bIncludeDiagonal = false, const int32 Direction = 0);
 };

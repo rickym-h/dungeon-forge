@@ -122,7 +122,7 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 	// RoomLayout should be a list of all the rooms in the dungeon. Now we have to convert that to a USimpleGridDungeonLayout
 	for (FDungeonRoom Room : RoomLayout)
 	{
-		TMap<FGridCoordinate,FGridCoordinate> WallTiles;
+		TSet<FGridEdge> WallEdges;
 		for (FGridCoordinate Coord : Room.LocalCoordOffsets)
 		{
 			Layout->AddRoomTiles({Coord+Room.GlobalCentre});
@@ -130,13 +130,13 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 			for (FGridCoordinate AdjacentCoord : UGridCoordinateHelperLibrary::GetAdjacentCoordinates(Coord+Room.GlobalCentre))
 			{
 				if (Room.GetGlobalCoordOffsets().Contains(AdjacentCoord)) continue;
-				WallTiles.Add(AdjacentCoord, Coord+Room.GlobalCentre);
+				WallEdges.Add({AdjacentCoord, Coord+Room.GlobalCentre});
 			}
 		}
 
-		for (const auto& [Key, Value] : WallTiles)
+		for (const auto& Edge : WallEdges)
 		{
-			Layout->AddWalls({FGridEdge(Key, Value)});
+			Layout->AddWalls({Edge});
 		}
 	}
 
@@ -184,7 +184,7 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	TArray<TArray<FGridCoordinate>> AlLRooms;
 	
 	//Iterate over every rectangle between MinSize and MaxSize
-	constexpr int MinSize = 2;
+	constexpr int MinSize = 4;
 	constexpr int MaxSize = 3;
 	for (int Width = MinSize; Width <= MaxSize; Width++)
 	{
@@ -208,6 +208,15 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 			AlLRooms.Add(RoomOffsetLayout);
 		}
 	}
+
+	// Create some L shaped rooms
+	const TArray<FGridCoordinate> LRoom1Initial = FRectBox(FGridCoordinate(0, 0), FGridCoordinate(1, 1)).GetFillCoordinates();
+	const TSet<FGridCoordinate> LRoom1Right = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 1));
+	const TSet<FGridCoordinate> LRoomUp = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 2));
+
+	const TArray<FGridCoordinate> LRoom1 = LRoom1Right.Union(LRoomUp).Array();
+	
+	AlLRooms.Add(LRoom1);
 	
 	UE_LOG(LogTemp, Warning, TEXT("Total generated possible rooms: %d"), AlLRooms.Num());
 
