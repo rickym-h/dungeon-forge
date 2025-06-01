@@ -41,6 +41,8 @@ struct FGridCoordinate
 
 	float DistanceFromCentre() const;
 	FGridCoordinate Inverse() const;
+	
+	FGridCoordinate Rotate(int32 RotationCount) const;
 };
 
 /**
@@ -123,7 +125,11 @@ public:
 	 * @param bIncludeDiagonal Whether to include diagonal coordinates when expanding (square becomes a square vs square becomes a cross)
 	 * @param Direction Specific a direction. 0 means every direction. 1 means only up, 2 means only right, 3 means only down, 4 means only left.
 	 * @return The expanded room.
-	 */
+	*/
 	UFUNCTION(BlueprintPure)
 	static TArray<FGridCoordinate> Expand(TArray<FGridCoordinate> RoomRepresentation, const int32 ExpansionDistance, const bool bIncludeDiagonal = false, const int32 Direction = 0);
+
+	
+	UFUNCTION(BlueprintPure)
+	static TArray<FGridCoordinate> RotateClockwise(const TArray<FGridCoordinate>& Coordinates, const int32 RotationCount = 1);
 };

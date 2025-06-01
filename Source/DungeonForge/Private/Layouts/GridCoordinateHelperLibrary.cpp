@@ -33,6 +33,15 @@ FGridCoordinate FGridCoordinate::Inverse() const
 	return FGridCoordinate(-this->X, -this->Y);
 }
 
+FGridCoordinate FGridCoordinate::Rotate(const int32 RotationCount) const
+{
+	if (RotationCount == 1)
+	{
+		return FGridCoordinate(this->Y, -this->X);
+	}
+	return FGridCoordinate(this->Y, -this->X).Rotate(RotationCount - 1);
+}
+
 FGridEdge::FGridEdge()
 {
 }
@@ -96,4 +105,16 @@ TArray<FGridCoordinate> UGridCoordinateHelperLibrary::Expand(TArray<FGridCoordin
 	}
 	
 	return RoomRepresentationSet.Array();
+}
+
+TArray<FGridCoordinate> UGridCoordinateHelperLibrary::RotateClockwise(const TArray<FGridCoordinate>& Coordinates, const int32 RotationCount)
+{
+	TArray<FGridCoordinate> RotatedCoordinates;
+	
+	for (const FGridCoordinate Coordinate : Coordinates)
+	{
+		RotatedCoordinates.Add(Coordinate.Rotate(RotationCount));
+	}
+	
+	return RotatedCoordinates;
 }
