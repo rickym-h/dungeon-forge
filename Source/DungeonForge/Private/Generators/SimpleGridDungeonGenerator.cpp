@@ -93,10 +93,6 @@ bool FDungeonRoom::AreRoomsTouching(const FDungeonRoom& A, const FDungeonRoom& B
 	return false;
 }
 
-USimpleGridDungeonGenerator::USimpleGridDungeonGenerator()
-{
-}
-
 USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 {	
 	USimpleGridDungeonLayout* Layout = NewObject<USimpleGridDungeonLayout>();
@@ -106,8 +102,8 @@ USimpleGridDungeonLayout* USimpleGridDungeonGenerator::GenerateLayout()
 
 	// Add a single room to the layout, needed to place all the rest
 	int HardCodedRoom1Index = 0;
-	RoomLayout.Add({FGridCoordinate(0,0), PossibleRooms[HardCodedRoom1Index], HardCodedRoom1Index});
-	for (FGridCoordinate Coord : PossibleRooms[HardCodedRoom1Index])
+	RoomLayout.Add(FDungeonRoom(FGridCoordinate(0,0), PossibleRooms[HardCodedRoom1Index].LocalCoordOffsets, HardCodedRoom1Index));
+	for (FGridCoordinate Coord : PossibleRooms[HardCodedRoom1Index].LocalCoordOffsets)
 	{
 		RoomLayoutUsedCoords.Add(Coord);
 	}
@@ -179,9 +175,9 @@ void USimpleGridDungeonGenerator::SetNumRooms(const int32 InRoomCount)
 	RoomComboOffsets = GenerateRoomComboOffsets(PossibleRooms);
 }
 
-TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
+TArray<FDungeonRoom> USimpleGridDungeonGenerator::InitPossibleRooms()
 {
-	TArray<TArray<FGridCoordinate>> AllRooms;
+	TArray<FDungeonRoom> AllRooms;
 	
 	//Iterate over every rectangle between MinSize and MaxSize
 	constexpr int MinSize = 2;
@@ -204,8 +200,8 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 					RoomOffsetLayout.Add(FGridCoordinate(X,Y));
 				}
 			}
-			UE_LOG(LogTemp, Warning, TEXT("RoomOffsetLayout: %d, %d with %d coordinates"), Width, Height, RoomOffsetLayout.Num());
-			AllRooms.Add(RoomOffsetLayout);
+			FDungeonRoom RoomRepresentation(FGridCoordinate(0,0), RoomOffsetLayout);
+			AllRooms.Add(RoomRepresentation);
 		}
 	}
 
@@ -213,12 +209,11 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	const TArray<FGridCoordinate> LRoom1Initial = FRectBox(FGridCoordinate(0, 0), FGridCoordinate(1, 1)).GetFillCoordinates();
 	const TSet<FGridCoordinate> LRoom1Right = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 1));
 	const TSet<FGridCoordinate> LRoomUp = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 2));
-
 	const TArray<FGridCoordinate> LRoom1 = LRoom1Right.Union(LRoomUp).Array();
-	AllRooms.Add(LRoom1);
-	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 1));
-	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 2));
-	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 3));
+	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), LRoom1));
+	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 1)));
+	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 2)));
+	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), (UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 3))));
 	
 	UE_LOG(LogTemp, Warning, TEXT("Total generated possible rooms: %d"), AllRooms.Num());
 
@@ -226,13 +221,12 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	// TODO set equal to number of rooms
 	int MaxRoomsInGen = 12;
 	MaxRoomsInGen = FMath::Min(MaxRoomsInGen, AllRooms.Num());
+
+	// Shuffle the rooms
+	AllRooms.Sort([](const FDungeonRoom& A, const FDungeonRoom& B) { return FMath::RandBool(); });
+	TArray<FDungeonRoom> OutPossibleRooms = {};
 	
-	AllRooms.Sort([this](const TArray<FGridCoordinate>& Item1, const TArray<FGridCoordinate>& Item2) {
-		return FMath::FRand() < 0.5f;
-	});
-	TArray<TArray<FGridCoordinate>> OutPossibleRooms = {};
-	
-	// Adds a random selection of rooms into generation
+	// Adds a random selection of rooms into the possible rooms
 	for (int i = 0; i < MaxRoomsInGen; i++)
 	{
 		OutPossibleRooms.Add(AllRooms[i]);
@@ -242,10 +236,9 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	return OutPossibleRooms;
 }
 
-TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms)
+TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms)
 {
 	TArray<TArray<TArray<FGridCoordinate>>> OutRoomComboOffsets = {};
-
 	for (int i = 0; i < Rooms.Num(); i++)
 	{
 		TArray<TArray<FGridCoordinate>> SecondRoomConnections;
@@ -256,19 +249,21 @@ TArray<TArray<TArray<FGridCoordinate>>> USimpleGridDungeonGenerator::GenerateRoo
 	// Iterates over every room, and adds coord offsets from one room to the other
 	for (int i = 0; i < Rooms.Num(); i++)
 	{
+		// Only iterating from i, not 0 because inverses can be calculated to reduce search space to N/2
+		// For example, the offsets of a room A to B, is just the inverse of the offsets from B to A - so they do not need to be recalculated
 		for (int j = i; j < Rooms.Num(); j++)
 		{
-			const TArray<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(Rooms[i], Rooms[j]);
+			const TArray<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(Rooms[i].LocalCoordOffsets, Rooms[j].LocalCoordOffsets);
 			OutRoomComboOffsets[i][j] = ItoJOffsets;
 
-			// If the other room is a copy of itself, the other room should have the same offsets as the first room
+			// If the other room is a copy of itself, the other room should have the same offsets as itself.
 			if (i == j)
 			{
 				OutRoomComboOffsets[j][i] = ItoJOffsets;
 				continue;
 			}
 			
-			// The offsets for the second room to the first one should just be the inverse of these generated offsets
+			// The offsets for the other room to itself should just be the inverse of it's own generated offsets
 			TArray<FGridCoordinate> JtoIOffsets;
 			for (FGridCoordinate Offset : ItoJOffsets)
 			{
@@ -332,7 +327,8 @@ void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<FDungeonRoom>& Ro
 {
 	// Take a new random room layout
 	const int NewRoomIndex = FMath::RandRange(0,PossibleRooms.Num()-1);
-	TArray<FGridCoordinate> NewRoomLocalCoords = PossibleRooms[NewRoomIndex];
+	FDungeonRoom NewRoom = PossibleRooms[NewRoomIndex];
+	NewRoom.PossibleRoomsIndex = NewRoomIndex;
 
 	// Find every existing room and their PossibleRooms index
 	TMap<FGridCoordinate, FDungeonRoom> PlaceableLocations;
@@ -345,7 +341,7 @@ void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<FDungeonRoom>& Ro
 
 			// Get Global Coords for this hypothetical dungeon
 			bool CanUse = true;
-			for (FGridCoordinate LocalOffsetFromPotentialCentre : NewRoomLocalCoords)
+			for (FGridCoordinate LocalOffsetFromPotentialCentre : NewRoom.LocalCoordOffsets)
 			{
 				if (RoomLayoutUsedCoords.Contains(LocalOffsetFromPotentialCentre + NewRoomGlobalOrigin))
 				{
@@ -363,12 +359,12 @@ void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<FDungeonRoom>& Ro
 		}
 	}
 
+	// Select a random location to place the new room
 	TArray<FGridCoordinate> ListOfSpawnLocations;
 	PlaceableLocations.GetKeys(ListOfSpawnLocations);
-
-	// Select a random location to place the new room
 	const FGridCoordinate RoomCentre = ListOfSpawnLocations[FMath::RandRange(0, ListOfSpawnLocations.Num() - 1)];
-	const FDungeonRoom NewRoom = FDungeonRoom(RoomCentre, NewRoomLocalCoords, NewRoomIndex);
+	
+	NewRoom.GlobalCentre = RoomCentre;
 	RoomLayout.Add(NewRoom);
 	RoomConnections.Add(NewRoom, PlaceableLocations[RoomCentre]);
 	
