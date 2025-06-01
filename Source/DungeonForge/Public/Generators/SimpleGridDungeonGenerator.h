@@ -40,7 +40,7 @@ struct FDungeonRoom
 };
 FORCEINLINE uint32 GetTypeHash(const FDungeonRoom& DungeonRoom)
 {
-	return FCrc::MemCrc32(&DungeonRoom.GlobalCentre, sizeof(DungeonRoom.GlobalCentre));
+	return FCrc::MemCrc32(&DungeonRoom, sizeof(DungeonRoom));
 }
 /**
  * 
@@ -49,8 +49,6 @@ UCLASS()
 class DUNGEONFORGE_API USimpleGridDungeonGenerator : public UObject
 {
 	GENERATED_BODY()
-	
-	USimpleGridDungeonGenerator();
 
 public:
 	/**
@@ -60,17 +58,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 	USimpleGridDungeonLayout* GenerateLayout();
 	
+	/**
+	 * An initialisation function to set the parameters of the generator.
+	 * It creates a datalist of possible rooms and calculates the offsets between them so that the generator runs faster at runtime/generation time.
+	 * @param InRoomCount The number of rooms to generate.
+	 */
 	void SetNumRooms(const int32 InRoomCount);
 
 protected:
 	int32 RoomCount;
-	TArray<TArray<FGridCoordinate>> PossibleRooms;
-	TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets;
+	TArray<FDungeonRoom> PossibleRooms;
+	TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets; // A square matrix where each cell contains a list of possible offsets for a room A, from a room B. Room A and Room B each have indexes which are used to get the list of coordinates.
 	
-	TArray<TArray<FGridCoordinate>> InitPossibleRooms();
+	TArray<FDungeonRoom> InitPossibleRooms();
 
-	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<TArray<FGridCoordinate>>& Rooms);
+	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms);
 	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
+
 	void AddSingleRoomToLayout(TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
 	
 	UFUNCTION(BlueprintCallable)
