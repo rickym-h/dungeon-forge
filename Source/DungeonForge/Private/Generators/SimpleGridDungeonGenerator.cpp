@@ -181,11 +181,11 @@ void USimpleGridDungeonGenerator::SetNumRooms(const int32 InRoomCount)
 
 TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 {
-	TArray<TArray<FGridCoordinate>> AlLRooms;
+	TArray<TArray<FGridCoordinate>> AllRooms;
 	
 	//Iterate over every rectangle between MinSize and MaxSize
-	constexpr int MinSize = 4;
-	constexpr int MaxSize = 3;
+	constexpr int MinSize = 2;
+	constexpr int MaxSize = 4;
 	for (int Width = MinSize; Width <= MaxSize; Width++)
 	{
 		for (int Height = MinSize; Height <= MaxSize; Height++)
@@ -205,7 +205,7 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 				}
 			}
 			UE_LOG(LogTemp, Warning, TEXT("RoomOffsetLayout: %d, %d with %d coordinates"), Width, Height, RoomOffsetLayout.Num());
-			AlLRooms.Add(RoomOffsetLayout);
+			AllRooms.Add(RoomOffsetLayout);
 		}
 	}
 
@@ -215,17 +215,19 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	const TSet<FGridCoordinate> LRoomUp = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 2));
 
 	const TArray<FGridCoordinate> LRoom1 = LRoom1Right.Union(LRoomUp).Array();
+	AllRooms.Add(LRoom1);
+	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 1));
+	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 2));
+	AllRooms.Add(UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 3));
 	
-	AlLRooms.Add(LRoom1);
-	
-	UE_LOG(LogTemp, Warning, TEXT("Total generated possible rooms: %d"), AlLRooms.Num());
+	UE_LOG(LogTemp, Warning, TEXT("Total generated possible rooms: %d"), AllRooms.Num());
 
 	// Since there can be a huge number of possible rooms, we reduce the number of sampled rooms to improve performance
 	// TODO set equal to number of rooms
 	int MaxRoomsInGen = 12;
-	MaxRoomsInGen = FMath::Min(MaxRoomsInGen, AlLRooms.Num());
+	MaxRoomsInGen = FMath::Min(MaxRoomsInGen, AllRooms.Num());
 	
-	AlLRooms.Sort([this](const TArray<FGridCoordinate>& Item1, const TArray<FGridCoordinate>& Item2) {
+	AllRooms.Sort([this](const TArray<FGridCoordinate>& Item1, const TArray<FGridCoordinate>& Item2) {
 		return FMath::FRand() < 0.5f;
 	});
 	TArray<TArray<FGridCoordinate>> OutPossibleRooms = {};
@@ -233,7 +235,7 @@ TArray<TArray<FGridCoordinate>> USimpleGridDungeonGenerator::InitPossibleRooms()
 	// Adds a random selection of rooms into generation
 	for (int i = 0; i < MaxRoomsInGen; i++)
 	{
-		OutPossibleRooms.Add(AlLRooms[i]);
+		OutPossibleRooms.Add(AllRooms[i]);
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Total sampled possible rooms for actual generation: %d"), OutPossibleRooms.Num());
