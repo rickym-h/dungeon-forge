@@ -18,8 +18,6 @@ struct FDungeonRoom
 
 	UPROPERTY()
 	TArray<FGridCoordinate> LocalCoordOffsets;
-	
-	int PossibleRoomsIndex;
 
 	FDungeonRoom();
 	FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets);
@@ -31,7 +29,7 @@ struct FDungeonRoom
 
 	bool operator==(const FDungeonRoom& Other) const
 	{
-		return GlobalCentre == Other.GlobalCentre;
+		return (GlobalCentre == Other.GlobalCentre) && (LocalCoordOffsets == Other.LocalCoordOffsets);
 	}
 	bool operator!=(const FDungeonRoom& Other) const
 	{
@@ -40,7 +38,12 @@ struct FDungeonRoom
 };
 FORCEINLINE uint32 GetTypeHash(const FDungeonRoom& DungeonRoom)
 {
-	return FCrc::MemCrc32(&DungeonRoom, sizeof(DungeonRoom));
+	uint32 Hash = GetTypeHash(DungeonRoom.GlobalCentre);
+	for (FGridCoordinate Coord : DungeonRoom.LocalCoordOffsets)
+	{
+		Hash = HashCombine(Hash, ::GetTypeHash(Coord));
+	}
+	return Hash;
 }
 /**
  * 
@@ -68,11 +71,13 @@ public:
 protected:
 	int32 RoomCount;
 	TArray<FDungeonRoom> PossibleRooms;
-	TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets; // A square matrix where each cell contains a list of possible offsets for a room A, from a room B. Room A and Room B each have indexes which are used to get the list of coordinates.
+	//TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets; // A square matrix where each cell contains a list of possible offsets for a room A, from a room B. Room A and Room B each have indexes which are used to get the list of coordinates.
+
+	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> RoomComboOffsetsMap;
 	
 	TArray<FDungeonRoom> InitPossibleRooms();
 
-	TArray<TArray<TArray<FGridCoordinate>>> GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms);
+	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms);
 	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
 
 	void AddSingleRoomToLayout(TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
