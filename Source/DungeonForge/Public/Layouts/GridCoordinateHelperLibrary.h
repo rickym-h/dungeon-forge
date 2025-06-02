@@ -131,5 +131,5 @@ public:
 
 	
 	UFUNCTION(BlueprintPure)
-	static TArray<FGridCoordinate> RotateClockwise(const TArray<FGridCoordinate>& Coordinates, const int32 RotationCount = 1);
+	static TSet<FGridCoordinate> RotateClockwise(const TSet<FGridCoordinate>& Coordinates, const int32 RotationCount = 1);
 };

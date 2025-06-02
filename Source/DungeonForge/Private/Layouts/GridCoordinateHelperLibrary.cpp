@@ -107,9 +107,9 @@ TArray<FGridCoordinate> UGridCoordinateHelperLibrary::Expand(TArray<FGridCoordin
 	return RoomRepresentationSet.Array();
 }
 
-TArray<FGridCoordinate> UGridCoordinateHelperLibrary::RotateClockwise(const TArray<FGridCoordinate>& Coordinates, const int32 RotationCount)
+TSet<FGridCoordinate> UGridCoordinateHelperLibrary::RotateClockwise(const TSet<FGridCoordinate>& Coordinates, const int32 RotationCount)
 {
-	TArray<FGridCoordinate> RotatedCoordinates;
+	TSet<FGridCoordinate> RotatedCoordinates;
 	
 	for (const FGridCoordinate Coordinate : Coordinates)
 	{

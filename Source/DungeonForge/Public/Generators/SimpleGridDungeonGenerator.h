@@ -17,20 +17,34 @@ struct FDungeonRoom
 	FGridCoordinate GlobalCentre;
 
 	UPROPERTY()
-	TArray<FGridCoordinate> LocalCoordOffsets;
+	TSet<FGridCoordinate> LocalCoordOffsets;
 
 	FDungeonRoom();
-	FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets);
-	FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex);
+	FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets);
+	FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex);
 	TArray<FGridCoordinate> GetGlobalCoordOffsets() const;
-	static int MaxManhattanDistanceBetweenRooms(TArray<FGridCoordinate> A, TArray<FGridCoordinate> B);
+	static int MaxManhattanDistanceBetweenRooms(TSet<FGridCoordinate> A, TSet<FGridCoordinate> B);
 	static bool DoRoomsOverlap(FDungeonRoom A, FDungeonRoom B);
 	static bool AreRoomsTouching(const FDungeonRoom& A, const FDungeonRoom& B);
 
 	bool operator==(const FDungeonRoom& Other) const
 	{
-		return (GlobalCentre == Other.GlobalCentre) && (LocalCoordOffsets == Other.LocalCoordOffsets);
+		if (GlobalCentre != Other.GlobalCentre)
+			return false;
+        
+		// Compare sets by checking if they have the same elements
+		if (LocalCoordOffsets.Num() != Other.LocalCoordOffsets.Num())
+			return false;
+        
+		for (const FGridCoordinate& Coord : LocalCoordOffsets)
+		{
+			if (!Other.LocalCoordOffsets.Contains(Coord))
+				return false;
+		}
+    
+		return true;
 	}
+
 	bool operator!=(const FDungeonRoom& Other) const
 	{
 		return !(*this == Other);
@@ -73,12 +87,12 @@ protected:
 	TArray<FDungeonRoom> PossibleRooms;
 	//TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets; // A square matrix where each cell contains a list of possible offsets for a room A, from a room B. Room A and Room B each have indexes which are used to get the list of coordinates.
 
-	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> RoomComboOffsetsMap;
+	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TSet<FGridCoordinate>> RoomComboOffsetsMap;
 	
 	TArray<FDungeonRoom> InitPossibleRooms();
 
-	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms);
-	TArray<FGridCoordinate> GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB);
+	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TSet<FGridCoordinate>> GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms);
+	TSet<FGridCoordinate> GenerateOffsetsForRooms(const TSet<FGridCoordinate>& RoomA, const TSet<FGridCoordinate>& RoomB);
 
 	void AddSingleRoomToLayout(TArray<FDungeonRoom> &RoomLayout, TSet<FGridCoordinate> &RoomLayoutUsedCoords, TMap<FDungeonRoom, FDungeonRoom>& RoomConnections) const;
 	

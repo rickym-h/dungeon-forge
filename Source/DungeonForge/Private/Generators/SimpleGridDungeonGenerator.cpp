@@ -12,13 +12,13 @@ FDungeonRoom::FDungeonRoom()
 	LocalCoordOffsets = {};
 }
 
-FDungeonRoom::FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets)
+FDungeonRoom::FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets)
 {
 	GlobalCentre = InGlobalCentre;
 	LocalCoordOffsets = InLocalCoordOffsets;
 }
 
-FDungeonRoom::FDungeonRoom(FGridCoordinate InGlobalCentre, const TArray<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex)
+FDungeonRoom::FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex)
 {
 	GlobalCentre = InGlobalCentre;
 	LocalCoordOffsets = InLocalCoordOffsets;
@@ -34,7 +34,7 @@ TArray<FGridCoordinate> FDungeonRoom::GetGlobalCoordOffsets() const
 	return OutArray;
 }
 
-int FDungeonRoom::MaxManhattanDistanceBetweenRooms(TArray<FGridCoordinate> A, TArray<FGridCoordinate> B)
+int FDungeonRoom::MaxManhattanDistanceBetweenRooms(TSet<FGridCoordinate> A, TSet<FGridCoordinate> B)
 {
 	int MaxA = 0;
 	for (const FGridCoordinate C : A)
@@ -189,7 +189,7 @@ TArray<FDungeonRoom> USimpleGridDungeonGenerator::InitPossibleRooms()
 			const int H_Neg = -(Height) / 2;
 
 			// Create the actual room representation
-			TArray<FGridCoordinate> RoomOffsetLayout;
+			TSet<FGridCoordinate> RoomOffsetLayout;
 			for (int X = W_Neg; X < W_Neg + Width; X++)
 			{
 				for (int Y = H_Neg; Y < H_Neg + Height; Y++)
@@ -206,7 +206,7 @@ TArray<FDungeonRoom> USimpleGridDungeonGenerator::InitPossibleRooms()
 	const TArray<FGridCoordinate> LRoom1Initial = FRectBox(FGridCoordinate(0, 0), FGridCoordinate(1, 1)).GetFillCoordinates();
 	const TSet<FGridCoordinate> LRoom1Right = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 1));
 	const TSet<FGridCoordinate> LRoomUp = TSet(UGridCoordinateHelperLibrary::Expand(LRoom1Initial, 2, false, 2));
-	const TArray<FGridCoordinate> LRoom1 = LRoom1Right.Union(LRoomUp).Array();
+	const TSet<FGridCoordinate> LRoom1 = LRoom1Right.Union(LRoomUp);
 	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), LRoom1));
 	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 1)));
 	AllRooms.Add(FDungeonRoom(FGridCoordinate(0,0), UGridCoordinateHelperLibrary::RotateClockwise(LRoom1, 2)));
@@ -233,9 +233,9 @@ TArray<FDungeonRoom> USimpleGridDungeonGenerator::InitPossibleRooms()
 	return OutPossibleRooms;
 }
 
-TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> USimpleGridDungeonGenerator::GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms)
+TMap<TTuple<FDungeonRoom, FDungeonRoom>, TSet<FGridCoordinate>> USimpleGridDungeonGenerator::GenerateRoomComboOffsets(const TArray<FDungeonRoom>& Rooms)
 {
-	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> OutRoomComboOffsets = {};
+	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TSet<FGridCoordinate>> OutRoomComboOffsets = {};
 	
 	// Iterates over every room, and adds coord offsets from one room to the other
 	for (const FDungeonRoom RoomA : Rooms)
@@ -245,11 +245,11 @@ TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> USimpleGridDun
 			// Since we calculate inverses to rooms below, it is possible that the offsets have already been calculated and added to the map.
 			if (OutRoomComboOffsets.Contains(TTuple<FDungeonRoom, FDungeonRoom>(RoomA, RoomB))) continue;
 			
-			const TArray<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(RoomA.LocalCoordOffsets, RoomB.LocalCoordOffsets);
+			const TSet<FGridCoordinate> ItoJOffsets = GenerateOffsetsForRooms(RoomA.LocalCoordOffsets, RoomB.LocalCoordOffsets);
 			OutRoomComboOffsets.Add(TTuple<FDungeonRoom, FDungeonRoom>(RoomA, RoomB), ItoJOffsets);
 			
 			// The offsets for the other room to itself should just be the inverse of its own generated offsets
-			TArray<FGridCoordinate> JtoIOffsets;
+			TSet<FGridCoordinate> JtoIOffsets;
 			for (FGridCoordinate Offset : ItoJOffsets)
 			{
 				JtoIOffsets.Add(Offset.Inverse());
@@ -261,9 +261,9 @@ TMap<TTuple<FDungeonRoom, FDungeonRoom>, TArray<FGridCoordinate>> USimpleGridDun
 	return OutRoomComboOffsets;
 }
 
-TArray<FGridCoordinate> USimpleGridDungeonGenerator::GenerateOffsetsForRooms(const TArray<FGridCoordinate>& RoomA, const TArray<FGridCoordinate>& RoomB)
+TSet<FGridCoordinate> USimpleGridDungeonGenerator::GenerateOffsetsForRooms(const TSet<FGridCoordinate>& RoomA, const TSet<FGridCoordinate>& RoomB)
 {
-	TArray<FGridCoordinate> OutArray;
+	TSet<FGridCoordinate> OutArray;
 
 	const int MaxBFSRange = FDungeonRoom::MaxManhattanDistanceBetweenRooms(RoomA, RoomB);
 
@@ -320,7 +320,7 @@ void USimpleGridDungeonGenerator::AddSingleRoomToLayout(TArray<FDungeonRoom>& Ro
 	{
 		// Find all placeable points -> filter out direct centre overlaps
 		TTuple<FDungeonRoom, FDungeonRoom> MapKey = TTuple<FDungeonRoom, FDungeonRoom>(FDungeonRoom(FGridCoordinate(), ExistingRoom.LocalCoordOffsets), NewRoom);
-		TArray<FGridCoordinate> Offsets = RoomComboOffsetsMap[MapKey];
+		TSet<FGridCoordinate> Offsets = RoomComboOffsetsMap[MapKey];
 		for (FGridCoordinate RoomOffset : Offsets)
 		{
 			FGridCoordinate NewRoomGlobalOrigin = ExistingRoom.GlobalCentre + RoomOffset;
