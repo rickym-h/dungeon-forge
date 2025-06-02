@@ -21,8 +21,7 @@ struct FDungeonRoom
 
 	FDungeonRoom();
 	FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets);
-	FDungeonRoom(FGridCoordinate InGlobalCentre, const TSet<FGridCoordinate>& InLocalCoordOffsets, int InPossibleRoomsIndex);
-	TArray<FGridCoordinate> GetGlobalCoordOffsets() const;
+	TSet<FGridCoordinate> GetGlobalCoordOffsets() const;
 	static int MaxManhattanDistanceBetweenRooms(TSet<FGridCoordinate> A, TSet<FGridCoordinate> B);
 	static bool DoRoomsOverlap(FDungeonRoom A, FDungeonRoom B);
 	static bool AreRoomsTouching(const FDungeonRoom& A, const FDungeonRoom& B);
@@ -85,8 +84,10 @@ public:
 protected:
 	int32 RoomCount;
 	TArray<FDungeonRoom> PossibleRooms;
-	//TArray<TArray<TArray<FGridCoordinate>>> RoomComboOffsets; // A square matrix where each cell contains a list of possible offsets for a room A, from a room B. Room A and Room B each have indexes which are used to get the list of coordinates.
 
+	/**
+	 * A map of pairs of rooms (A and B) to a list of relative coordinates where an instance of B can be offset from A.
+	 */
 	TMap<TTuple<FDungeonRoom, FDungeonRoom>, TSet<FGridCoordinate>> RoomComboOffsetsMap;
 	
 	TArray<FDungeonRoom> InitPossibleRooms();
