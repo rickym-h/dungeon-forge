@@ -10,7 +10,7 @@
 class USimpleGridDungeonGenerator;
 class USimpleGridDungeonLayout;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class DUNGEONFORGE_API ASimpleGridDungeonInstance : public ABaseDungeonInstance
 {
 	GENERATED_BODY()
