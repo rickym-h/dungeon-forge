@@ -69,6 +69,16 @@ void ASimpleGridDungeonInstance::ClearDungeon()
 	DoorMeshISM->ClearInstances();
 }
 
+TArray<FVector> ASimpleGridDungeonInstance::GetRoomFloorPositions() const
+{
+	TArray<FVector> RoomFloorPositions;
+	for (auto Tile : Layout->GetAllFloorTiles())
+	{
+		RoomFloorPositions.Add(GetPositionForCoordinate(Tile));
+	}
+	return RoomFloorPositions;
+}
+
 // Called when the game starts or when spawned
 void ASimpleGridDungeonInstance::BeginPlay()
 {
