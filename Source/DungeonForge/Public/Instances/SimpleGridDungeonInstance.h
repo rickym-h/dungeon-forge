@@ -21,9 +21,9 @@ public:
 
 	virtual void GenerateLayout() override;
 	virtual void SpawnDungeon() override;
-	UFUNCTION(Category="Generator Functions", CallInEditor)	
+	UFUNCTION(BlueprintCallable, Category="Generator Functions", CallInEditor)	
 	virtual void GenerateDungeon() override;
-	UFUNCTION(Category="Generator Functions", CallInEditor)
+	UFUNCTION(BlueprintCallable, Category="Generator Functions", CallInEditor)	
 	virtual void ClearDungeon() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Post-Generation Helpers")
