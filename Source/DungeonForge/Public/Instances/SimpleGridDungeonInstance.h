@@ -26,6 +26,9 @@ public:
 	UFUNCTION(Category="Generator Functions", CallInEditor)
 	virtual void ClearDungeon() override;
 
+	UFUNCTION(BlueprintCallable, Category = "Post-Generation Helpers")
+	TArray<FVector> GetRoomFloorPositions() const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
