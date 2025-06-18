@@ -53,6 +53,8 @@ protected:
 	UStaticMesh* WallMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
 	UStaticMesh* DoorMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	UStaticMesh* PillarMesh;
 
 	UPROPERTY()
 	UInstancedStaticMeshComponent* RoomFloorMeshISM;
@@ -62,13 +64,17 @@ protected:
 	UInstancedStaticMeshComponent* WallMeshISM;
 	UPROPERTY()
 	UInstancedStaticMeshComponent* DoorMeshISM;
+	UPROPERTY()
+	UInstancedStaticMeshComponent* PillarMeshISM;
 
 	void SpawnRoomFloorTiles();
 	void SpawnCorridorFloorTiles();
 	void SpawnWallTiles();
 	void SpawnDoorTiles();
+	void SpawnCornerPillars();
 
 	FVector GetPositionForCoordinate(const FGridCoordinate& Coordinate) const;
+	FVector GetPositionForCorner(const FGridCorner& Corner) const;
 	FVector GetPositionForEdge(const FGridEdge& Edge) const;
 	FRotator GetRotationForEdge(const FGridEdge& Edge) const;
 };

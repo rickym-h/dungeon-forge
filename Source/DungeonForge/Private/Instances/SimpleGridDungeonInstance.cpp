@@ -25,6 +25,8 @@ ASimpleGridDungeonInstance::ASimpleGridDungeonInstance()
 	WallMeshISM->SetupAttachment(RootComponent);
 	DoorMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("DoorMeshISM");
 	DoorMeshISM->SetupAttachment(RootComponent);
+	PillarMeshISM = CreateDefaultSubobject<UInstancedStaticMeshComponent>("PillarMeshISM");
+	PillarMeshISM->SetupAttachment(RootComponent);
 }
 
 void ASimpleGridDungeonInstance::GenerateLayout()
@@ -47,6 +49,7 @@ void ASimpleGridDungeonInstance::SpawnDungeon()
 	SpawnCorridorFloorTiles();
 	SpawnWallTiles();
 	SpawnDoorTiles();
+	SpawnCornerPillars();
 }
 
 void ASimpleGridDungeonInstance::GenerateDungeon()
@@ -67,6 +70,8 @@ void ASimpleGridDungeonInstance::ClearDungeon()
 	CorridorFloorMeshISM->ClearInstances();
 	WallMeshISM->ClearInstances();
 	DoorMeshISM->ClearInstances();
+	PillarMeshISM->ClearInstances();
+	Layout = nullptr;
 }
 
 TArray<FVector> ASimpleGridDungeonInstance::GetRoomFloorPositions() const
@@ -152,9 +157,31 @@ void ASimpleGridDungeonInstance::SpawnDoorTiles()
 	DoorMeshISM->SetStaticMesh(DoorMesh);
 }
 
+void ASimpleGridDungeonInstance::SpawnCornerPillars()
+{
+	TArray<FTransform> PillarTransforms;
+	for (const FGridCorner& Corner : Layout->GetCornerPillarPositions(GridSize))
+	{
+		const FTransform PillarTransform = FTransform(
+			FRotator::ZeroRotator,
+			GetPositionForCorner(Corner),
+			FVector(1.0f, 1.0f, 1.0f)
+			);
+		
+		PillarTransforms.Add(PillarTransform);
+	}
+	PillarMeshISM->AddInstances(PillarTransforms, false);
+	PillarMeshISM->SetStaticMesh(PillarMesh);
+}
+
 FVector ASimpleGridDungeonInstance::GetPositionForCoordinate(const FGridCoordinate& Coordinate) const
 {
 	return GetActorLocation() + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Coordinate, GridSize);
+}
+
+FVector ASimpleGridDungeonInstance::GetPositionForCorner(const FGridCorner& Corner) const
+{
+	return GetActorLocation() + ((UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Corner.CoordinateA, GridSize) + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Corner.CoordinateB, GridSize) + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Corner.CoordinateC, GridSize) + UGridCoordinateHelperLibrary::GetWorldPositionFromGridCoordinate(Corner.CoordinateD, GridSize)) / 4.0f);
 }
 
 FVector ASimpleGridDungeonInstance::GetPositionForEdge(const FGridEdge& Edge) const

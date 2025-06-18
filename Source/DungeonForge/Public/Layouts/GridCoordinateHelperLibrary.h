@@ -87,11 +87,13 @@ struct FGridEdge
 
 	/**
 	 * 
-	 * @return Returns an arbitrary sorted version of the edge, where CoordinateA is considered less than CoordinateB if undirected.
+	 * @return Creates an arbitrary sorted version of the edge, where CoordinateA is considered less than CoordinateB if undirected.
 	 * Useful for comparisons with undirected edges if CoordinateA and CoordinateB are swapped.
 	 */
-	FGridEdge Sorted() const;
 	void Sort();
+	
+	bool SharesSingleCoordinate(FGridEdge EdgeB, FGridCoordinate& OutSharedCoordinate) const;
+	bool FormsCorner(FGridEdge EdgeB) const;
 };
 
 /**
@@ -101,6 +103,56 @@ struct FGridEdge
 FORCEINLINE uint32 GetTypeHash(const FGridEdge& Edge)
 {
 	return FCrc::MemCrc32(&Edge, sizeof(Edge));
+}
+
+/**
+ * A data structure representing an edge in a grid layout. Can be used to represent doors, walls, or other connections between tiles.
+ */
+USTRUCT(BlueprintType)
+struct FGridCorner
+{
+	GENERATED_BODY()
+	
+	FGridCorner();
+	FGridCorner(const FGridCoordinate& InCoordinateA, const FGridCoordinate& InCoordinateB, const FGridCoordinate& InCoordinateC, const FGridCoordinate& InCoordinateD);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGridCoordinate CoordinateA;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGridCoordinate CoordinateB;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGridCoordinate CoordinateC;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGridCoordinate CoordinateD;
+	
+	void Sort();
+	
+	bool operator==(const FGridCorner& Other) const
+	{
+		return (CoordinateA == Other.CoordinateA) && (CoordinateB == Other.CoordinateB) && (CoordinateC == Other.CoordinateC) && (CoordinateD == Other.CoordinateD);
+	}
+
+	bool operator!=(const FGridCorner& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	/**
+	 * 
+	 * @param EdgeA 
+	 * @param EdgeB 
+	 * @return The grid corner formed by two perpendicular edges A and B. These edges should share a common tile.
+	 */
+	static FGridCorner FromEdges(const FGridEdge& EdgeA, const FGridEdge& EdgeB);
+};
+
+/**
+ * @param Corner 
+ * @return Generates hash for the grid corner. Required for TSet and TMap usage.
+ */
+FORCEINLINE uint32 GetTypeHash(const FGridCorner& Corner)
+{
+	return FCrc::MemCrc32(&Corner, sizeof(Corner));
 }
 
 /**

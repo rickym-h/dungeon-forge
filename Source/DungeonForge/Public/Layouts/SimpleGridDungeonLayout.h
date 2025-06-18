@@ -39,6 +39,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Layout Data")
 	TArray<FGridEdge> GetWallPositions(const float GridSize) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Layout Data")
+	TArray<FGridCorner> GetCornerPillarPositions(const float GridSize) const;
+
 	UFUNCTION()
 	void AddRoomTiles(const TArray<FGridCoordinate>& InRoomTiles);
 	UFUNCTION()
@@ -50,10 +53,13 @@ public:
 
 	UPROPERTY()
 	bool bImputesWallPositions = true;
+	UPROPERTY()
+	bool bImputesCornerPillarPositions = true;
 
 protected:
 	TSet<FGridCoordinate> RoomTiles;
 	TSet<FGridCoordinate> CorridorTiles;
 	TSet<FGridEdge> Walls;
 	TSet<FGridEdge> Doors;
+	TSet<FGridCorner> CornerPillars;
 };
