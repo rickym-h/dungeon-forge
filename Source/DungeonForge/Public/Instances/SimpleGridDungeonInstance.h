@@ -48,6 +48,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
 	UStaticMesh* RoomFloorMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
+	bool bUseRandomFloorOrientation = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
 	UStaticMesh* CorridorFloorMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn Settings|Static Meshes")
 	UStaticMesh* WallMesh;

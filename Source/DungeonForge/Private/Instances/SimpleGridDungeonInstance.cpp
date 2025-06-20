@@ -96,8 +96,10 @@ void ASimpleGridDungeonInstance::SpawnRoomFloorTiles()
 	TArray<FTransform> RoomFloorTransforms;
 	for (const FGridCoordinate& Coordinate : Layout->GetRoomTiles())
 	{
+		const FRotator Rotation = bUseRandomFloorOrientation ? FRotator(0.0f, 90 * FMath::RandRange(0, 3), 0.0f) : FRotator::ZeroRotator;
+		
 		const FTransform TileTransform = FTransform(
-			FRotator::ZeroRotator,
+			Rotation,
 			GetPositionForCoordinate(Coordinate),
 			FVector(1.0f, 1.0f, 1.0f));
 		
