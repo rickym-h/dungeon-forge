@@ -3,8 +3,6 @@
 
 #include "Layouts/GridCoordinateHelperLibrary.h"
 
-#include "Interfaces/IPluginManager.h"
-
 FGridCoordinate::FGridCoordinate(): X(0), Y(0)
 {
 }
